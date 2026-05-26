@@ -114,7 +114,7 @@ function App({ onLogout }) {
 
       data.forEach(p => {
 
-        mapaResultados[p.partido_id] = p.resultado;
+        mapaResultados[p.partido_id] = p.pronostico_usuario;
 
         mapaMarcadores[p.partido_id] = {
           local: p.marcador_local,
@@ -241,75 +241,71 @@ function App({ onLogout }) {
   */
 
   const guardarJornadaCompleta = async () => {
+    if (!jornadaAbierta) {
+      setMensaje("🔒 La jornada ya está cerrada");
+      return;
+    }
 
     const incompletos = partidos.filter(partido => {
-
       const resultado = pronosticosUsuario[partido.id];
-
-      const marcadorLocal =
-        marcadoresUsuario[partido.id]?.local;
-
-      const marcadorVisitante =
-        marcadoresUsuario[partido.id]?.visitante;
+      const marcadorLocal = marcadoresUsuario[partido.id]?.local;
+      const marcadorVisitante = marcadoresUsuario[partido.id]?.visitante;
 
       return (
         !resultado ||
         marcadorLocal === undefined ||
-        marcadorVisitante === undefined
+        marcadorVisitante === undefined ||
+        marcadorLocal === "" ||
+        marcadorVisitante === ""
       );
-
     });
 
-
     if (incompletos.length > 0) {
-
-      setPartidosIncompletos(
-        incompletos.map(p => p.id)
-      );
-
+      setPartidosIncompletos(incompletos.map(p => p.id));
       setMensaje(`⚠ Faltan ${incompletos.length} pronóstico(s)`);
-
       return;
-
     }
-
 
     setPartidosIncompletos([]);
-
+    setMensaje("Guardando pronósticos...");
 
     const pronosticos = partidos.map(partido => ({
-
       partido_id: partido.id,
-
-      resultado:
-        pronosticosUsuario[partido.id],
-
-      marcador_local:
-        marcadoresUsuario[partido.id].local,
-
-      marcador_visitante:
-        marcadoresUsuario[partido.id].visitante
-
+      resultado: pronosticosUsuario[partido.id],
+      marcador_local: Number(marcadoresUsuario[partido.id].local),
+      marcador_visitante: Number(marcadoresUsuario[partido.id].visitante)
     }));
 
+    try {
+      const response = await fetch("http://localhost:3000/pronosticos/guardar-jornada", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(pronosticos)
+      });
 
-    const response = await fetch("http://localhost:3000/pronosticos/guardar-jornada", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(pronosticos)
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMensaje(`❌ ${data.mensaje || "Error guardando pronósticos"}`);
+
+        if (response.status === 403) {
+          setJornadaAbierta(false);
+        }
+
+        return;
+      }
+
+      setMensaje(`✅ ${data.mensaje}`);
+      setRefreshRanking(prev => !prev);
+      await cargarPronosticosUsuario();
+
+    } catch (error) {
+      console.error(error);
+      setMensaje("❌ Error de conexión con el servidor");
     }
-    );
-
-
-    const data = await response.json();
-
-    setMensaje(data.mensaje);
-
-    setRefreshRanking(prev => !prev);
-
   };
 
 
@@ -357,7 +353,7 @@ function App({ onLogout }) {
           className="border rounded px-2 py-1"
         >
           {listaJornadas.map(j => (
-            <option key={j.numero} value={j.numero}>
+            <option key={j.id} value={j.id}>
               Jornada {j.numero}
             </option>
           ))}
