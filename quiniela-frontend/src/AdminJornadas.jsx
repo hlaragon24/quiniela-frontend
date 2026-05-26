@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "./config/api";
 
 function AdminJornadas() {
 
@@ -8,6 +9,7 @@ function AdminJornadas() {
   const [fechaCierre, setFechaCierre] = useState("");
 
   const [modoEdicion, setModoEdicion] = useState(false);
+  const [jornadaEditandoId, setJornadaEditandoId] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -23,7 +25,7 @@ function AdminJornadas() {
     try {
 
       const response = await fetch(
-        "https://quiniela-app-rq9c.onrender.com/jornadas"
+        `${API}/jornadas`
       );
 
       const data = await response.json();
@@ -59,8 +61,8 @@ function AdminJornadas() {
     try {
 
       const url = modoEdicion
-        ? `https://quiniela-app-rq9c.onrender.com/jornadas/${numero}`
-        : "https://quiniela-app-rq9c.onrender.com/jornadas";
+        ? `${API}/jornadas/${jornadaEditandoId}`
+        : `${API}/jornadas`;
 
       const method = modoEdicion ? "PUT" : "POST";
 
@@ -117,6 +119,7 @@ function AdminJornadas() {
 
   const editarJornada = (jornada) => {
 
+    setJornadaEditandoId(jornada.id);
     setNumero(jornada.numero);
 
     setFechaInicio(
@@ -138,14 +141,14 @@ function AdminJornadas() {
   ============================
   */
 
-  const eliminarJornada = async (numero) => {
+  const eliminarJornada = async (id) => {
 
     if (!window.confirm("¿Eliminar jornada?")) return;
 
     try {
 
       const response = await fetch(
-        `https://quiniela-app-rq9c.onrender.com/jornadas/${numero}`,
+        `${API}/jornadas/${id}`,
         {
 
           method: "DELETE",
@@ -183,12 +186,12 @@ function AdminJornadas() {
   ============================
   */
 
-  const cerrarJornada = async (numero) => {
+  const cerrarJornada = async (id) => {
 
     try {
 
       const response = await fetch(
-        `https://quiniela-app-rq9c.onrender.com/jornadas/${numero}`,
+        `${API}/jornadas/${id}`,
         {
           method: "PUT",
           headers: {
@@ -241,6 +244,7 @@ function AdminJornadas() {
     setFechaCierre("");
 
     setModoEdicion(false);
+    setJornadaEditandoId(null);
 
   };
 
@@ -351,7 +355,7 @@ function AdminJornadas() {
 
         jornadas.map(j => (
 
-          <div key={j.numero} style={cardStyle}>
+          <div key={j.id} style={cardStyle}>
 
 
             <div>
@@ -415,7 +419,7 @@ function AdminJornadas() {
 
               <button
                 disabled={j.estado === "cerrada"}
-                onClick={() => cerrarJornada(j.numero)}
+                onClick={() => cerrarJornada(j.id)}
                 style={{
                   ...botonNaranja,
                   opacity: j.estado === "cerrada" ? 0.5 : 1,
@@ -428,7 +432,7 @@ function AdminJornadas() {
 
               <button
 
-                onClick={() => eliminarJornada(j.numero)}
+                onClick={() => eliminarJornada(j.id)}
 
                 style={botonRojo}
 

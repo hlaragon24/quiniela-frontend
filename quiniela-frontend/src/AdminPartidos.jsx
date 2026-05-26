@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "./config/api";
 
 function AdminPartidos() {
 
@@ -25,7 +26,7 @@ function AdminPartidos() {
     const cargarJornadas = async () => {
 
         const res = await fetch(
-            "https://quiniela-app-rq9c.onrender.com/jornadas"
+            `${API}/jornadas`
         );
 
         const data = await res.json();
@@ -36,7 +37,7 @@ function AdminPartidos() {
 
         const activa = data.find(j => j.estado !== "cerrada");
 
-        if (activa) setJornadaId(activa.numero);
+        if (activa) setJornadaId(activa.id);
 
     };
 
@@ -50,7 +51,7 @@ function AdminPartidos() {
     const cargarPartidos = async () => {
 
         const res = await fetch(
-            "https://quiniela-app-rq9c.onrender.com/partidos",
+            `${API}/partidos`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -96,8 +97,8 @@ function AdminPartidos() {
         }
 
         const url = editandoId
-            ? `https://quiniela-app-rq9c.onrender.com/partidos/${editandoId}`
-            : "https://quiniela-app-rq9c.onrender.com/partidos";
+            ? `${API}/partidos/${editandoId}`
+            : `${API}/partidos`;
 
         const method = editandoId ? "PUT" : "POST";
 
@@ -160,7 +161,7 @@ function AdminPartidos() {
 
         await fetch(
 
-            `https://quiniela-app-rq9c.onrender.com/partidos/${id}`,
+            `${API}/partidos/${id}`,
 
             {
                 method: "DELETE",
@@ -202,7 +203,7 @@ function AdminPartidos() {
     */
 
     const partidosFiltrados = partidos.filter(
-        p => p.jornada_id === jornadaId
+        p => Number(p.jornada_id) === Number(jornadaId)
     );
 
 
@@ -260,8 +261,8 @@ function AdminPartidos() {
                         jornadas.map(j => (
 
                             <option
-                                key={j.numero}
-                                value={j.numero}
+                                key={j.id}
+                                value={j.id}
                             >
 
                                 Jornada {j.numero}

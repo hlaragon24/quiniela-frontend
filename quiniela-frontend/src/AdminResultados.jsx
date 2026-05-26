@@ -3,10 +3,11 @@ import Ranking from "./Ranking";
 import TimerJornada from "./TimerJornada";
 import AdminJornadas from "./AdminJornadas";
 import AdminPartidos from "./AdminPartidos";
+import { API } from "./config/api";
 
 function AdminResultados({ onLogout }) {
 
-    const [jornada, setJornada] = useState(1);
+    const [jornada, setJornada] = useState(null);
     const [jornadas, setJornadas] = useState([]);
     const [partidos, setPartidos] = useState([]);
 
@@ -28,12 +29,16 @@ function AdminResultados({ onLogout }) {
     const cargarJornadas = async () => {
 
         const res = await fetch(
-            "https://quiniela-app-rq9c.onrender.com/jornadas"
+            `${API}/jornadas`
         );
 
         const data = await res.json();
 
-        setJornadas(data);
+        setJornadas(Array.isArray(data) ? data : []);
+
+        if (Array.isArray(data) && data.length > 0 && !jornada) {
+            setJornada(data[0].id);
+        }
 
     };
 
@@ -49,7 +54,7 @@ function AdminResultados({ onLogout }) {
         try {
 
             const response = await fetch(
-                `https://quiniela-app-rq9c.onrender.com/partidos/${jornada}`
+                `${API}/partidos/${jornada}`
             );
 
             const data = await response.json();
@@ -99,7 +104,7 @@ function AdminResultados({ onLogout }) {
 
     useEffect(() => {
 
-        cargarPartidos();
+        if (jornada) cargarPartidos();
 
     }, [jornada]);
 
@@ -124,7 +129,7 @@ function AdminResultados({ onLogout }) {
             }
 
             const response = await fetch(
-                `https://quiniela-app-rq9c.onrender.com/resultados/${partidoId}`,
+                `${API}/resultados/${partidoId}`,
                 {
                     method: "POST",
                     headers: {
@@ -168,7 +173,7 @@ function AdminResultados({ onLogout }) {
                 ([partidoId, marcador]) =>
 
                     fetch(
-                        `https://quiniela-app-rq9c.onrender.com/resultados/${partidoId}`,
+                        `${API}/resultados/${partidoId}`,
                         {
                             method: "POST",
                             headers: {
@@ -239,7 +244,7 @@ function AdminResultados({ onLogout }) {
 
                 <h1>Panel Admin ⚙️</h1>
 
-                <TimerJornada jornada={jornada} />
+                <TimerJornada key={jornada} jornada={jornada} />
 
                 <div style={{ display: "flex", gap: "10px" }}>
 
@@ -339,13 +344,13 @@ function AdminResultados({ onLogout }) {
 
                         <select
                             value={jornada}
-                            onChange={(e) => setJornada(e.target.value)}
+                            onChange={(e) => setJornada(Number(e.target.value))}
                             style={selectStyle}
                         >
 
                             {
                                 jornadas.map(j => (
-                                    <option key={j.numero} value={j.numero}>
+                                    <option key={j.id} value={j.id}>
                                         Jornada {j.numero}
                                     </option>
                                 ))
