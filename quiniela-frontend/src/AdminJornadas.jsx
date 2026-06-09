@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
 
-function AdminJornadas({ torneoId }) {
+function AdminJornadas({ torneoId, torneoNombre }) {
   const [jornadas, setJornadas] = useState([]);
   const [numero, setNumero] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
@@ -118,6 +118,12 @@ function AdminJornadas({ torneoId }) {
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">Gestión de Jornadas 📅</h2>
+
+      {torneoNombre && (
+        <div className="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          Torneo activo: <span className="font-bold text-blue-700">{torneoNombre}</span>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2.5 mb-5">
         <input

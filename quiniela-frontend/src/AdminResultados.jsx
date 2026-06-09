@@ -339,7 +339,12 @@ function AdminResultados({ onLogout }) {
                 </div>
             )}
 
-            {tab === "jornadas" && <AdminJornadas torneoId={torneoId} />}
+            {tab === "jornadas" && (
+                <AdminJornadas
+                    torneoId={torneoId}
+                    torneoNombre={torneos.find((t) => t.id === torneoId)?.nombre || ""}
+                />
+            )}
             {tab === "partidos" && <AdminPartidos torneoId={torneoId} />}
             {tab === "usuarios" && <AdminUsuarios />}
             {tab === "campeon" && <AdminCampeon torneoId={torneoId} />}
