@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Dashboard from "./Dashboard";
 import Ranking from "./Ranking";
 import TimerJornada from "./TimerJornada";
 import RankingHistorial from "./RankingHistorial";
 import MisResultados from "./MisResultados";
 import HistoricoGeneral from "./HistoricoGeneral";
-import AdminJornadas from "./AdminJornadas";
+import TablaGeneral from "./TablaGeneral";
+import PerfilJugador from "./PerfilJugador";
+import HistoricoPronosticos from "./HistoricoPronosticos";
 import { API } from "./config/api";
 
 import {
@@ -14,65 +17,110 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 function App({ onLogout }) {
-  const [jornada, setJornada] = useState(null);
+  const [torneos, setTorneos] = useState([]);
+  const [torneoId, setTorneoId] = useState("");
+
+  const [jornadaNumero, setJornadaNumero] = useState("");
+  const [jornadaActual, setJornadaActual] = useState(null);
   const [partidos, setPartidos] = useState([]);
   const [mensaje, setMensaje] = useState("");
 
   const [pronosticosUsuario, setPronosticosUsuario] = useState({});
   const [marcadoresUsuario, setMarcadoresUsuario] = useState({});
 
-  const [jornadaAbierta, setJornadaAbierta] = useState(true);
+  const [jornadaAbierta, setJornadaAbierta] = useState(false);
   const [refreshRanking, setRefreshRanking] = useState(false);
 
   const [partidosIncompletos, setPartidosIncompletos] = useState([]);
   const [listaJornadas, setListaJornadas] = useState([]);
 
   const token = localStorage.getItem("token");
-  const rol = localStorage.getItem("rol");
 
+  const jornadaId = jornadaActual?.id ?? null;
 
-  /*
-  ===============================
-  CARGAR JORNADAS
-  ===============================
-  */
-  const cargarJornadas = async () => {
+  // ── Torneos ──────────────────────────────────────────────────────────
+  const cargarTorneos = async () => {
     try {
-      const res = await fetch(`${API}/jornadas`);
+      const res = await fetch(`${API}/torneos`);
       const data = await res.json();
 
-      if (Array.isArray(data)) {
-        setListaJornadas(data);
+      if (!res.ok || !Array.isArray(data)) return;
 
-        if (!jornada && data.length > 0) {
-          setJornada(data[0].id);
-        }
-      }
+      setTorneos(data);
+
+      if (data.length > 0) setTorneoId(data[0].id);
     } catch (error) {
-      console.error("Error cargando jornadas:", error);
+      console.error("Error cargando torneos:", error);
     }
   };
 
-  /*
-  ===============================
-  CARGAR PARTIDOS
-  ===============================
-  */
-  const cargarPartidos = async () => {
-    if (!jornada) return;
+  // ── Jornadas ─────────────────────────────────────────────────────────
+  const cargarJornadas = async (tid) => {
+    if (!tid) return;
 
     try {
-      const response = await fetch(`${API}/partidos/${jornada}`);
+      const res = await fetch(`${API}/jornadas?torneo_id=${tid}`);
+      const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data)) {
+        setListaJornadas([]);
+        return;
+      }
+
+      setListaJornadas(data);
+
+      if (data.length > 0) setJornadaNumero(String(data[0].numero));
+    } catch (error) {
+      console.error("Error cargando jornadas:", error);
+      setListaJornadas([]);
+    }
+  };
+
+  const cargarJornadaActual = async () => {
+    if (!jornadaNumero) return null;
+
+    try {
+      const res = await fetch(`${API}/jornadas/${jornadaNumero}`);
+      const data = await res.json();
+
+      if (!res.ok || !data?.id) {
+        setJornadaActual(null);
+        setJornadaAbierta(false);
+        return null;
+      }
+
+      setJornadaActual(data);
+
+      const cierre = new Date(data.fecha_cierre);
+      const abierta =
+        data.estado === "abierta" &&
+        !Number.isNaN(cierre.getTime()) &&
+        new Date() < cierre;
+
+      setJornadaAbierta(abierta);
+      return data;
+    } catch (error) {
+      console.error("Error cargando jornada actual:", error);
+      setJornadaActual(null);
+      setJornadaAbierta(false);
+      return null;
+    }
+  };
+
+  const cargarPartidos = async (jornadaDbId) => {
+    if (!jornadaDbId) {
+      setPartidos([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API}/partidos/${jornadaDbId}`);
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Error cargando partidos:", data);
         setPartidos([]);
         return;
       }
@@ -80,54 +128,34 @@ function App({ onLogout }) {
       setPartidos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error cargando partidos:", error);
+      setPartidos([]);
     }
   };
 
-  /*
-  ===============================
-  CARGAR PRONÓSTICOS USUARIO
-  ===============================
-  */
-  const cargarPronosticosUsuario = async () => {
-    if (!jornada) return;
+  const cargarPronosticosUsuario = async (jornadaDbId) => {
+    if (!token || !jornadaDbId) return;
 
     try {
-      if (!token) {
-        console.warn("Token no disponible");
-        return;
-      }
-
-      const response = await fetch(`${API}/pronosticos/usuario`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await fetch(`${API}/pronosticos/usuario/${jornadaDbId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        console.error("Error cargando pronósticos:", response.status);
-        return;
-      }
+      if (!response.ok) return;
 
       const data = await response.json();
 
-      if (!Array.isArray(data)) {
-        console.warn("Respuesta inesperada:", data);
-        return;
-      }
+      if (!Array.isArray(data)) return;
 
       const mapaResultados = {};
       const mapaMarcadores = {};
 
-      data
-        .filter(p => Number(p.jornada_id) === Number(jornada))
-        .forEach(p => {
-          mapaResultados[p.partido_id] = p.pronostico_usuario;
-
-          mapaMarcadores[p.partido_id] = {
-            local: p.marcador_local,
-            visitante: p.marcador_visitante
-          };
-        });
+      data.forEach((p) => {
+        mapaResultados[p.partido_id] = p.pronostico_usuario;
+        mapaMarcadores[p.partido_id] = {
+          local: p.marcador_local,
+          visitante: p.marcador_visitante,
+        };
+      });
 
       setPronosticosUsuario(mapaResultados);
       setMarcadoresUsuario(mapaMarcadores);
@@ -136,114 +164,81 @@ function App({ onLogout }) {
     }
   };
 
-  /*
-  ===============================
-  VERIFICAR ESTADO JORNADA
-  ===============================
-  */
-  const verificarEstadoJornada = async () => {
-    if (!jornada) return;
-
-    try {
-      const response = await fetch(`${API}/jornadas/${jornada}`);
-      const data = await response.json();
-
-      if (!response.ok || !data?.fecha_cierre) {
-        console.warn("Jornada no encontrada o sin fecha_cierre:", data);
-        setJornadaAbierta(false);
-        return;
-      }
-
-      const ahora = new Date();
-      const cierre = new Date(data.fecha_cierre);
-
-      const abiertaPorFecha = ahora < cierre;
-      const abiertaPorEstado = data.estado === "abierta";
-
-      setJornadaAbierta(abiertaPorFecha && abiertaPorEstado);
-    } catch (error) {
-      console.error("Error verificando jornada:", error);
-      setJornadaAbierta(false);
-    }
-  };
-
+  // ── Effects ───────────────────────────────────────────────────────────
   useEffect(() => {
-    cargarJornadas();
+    cargarTorneos();
   }, []);
 
   useEffect(() => {
+    if (!torneoId) return;
+    setJornadaNumero("");
+    setListaJornadas([]);
+    cargarJornadas(torneoId);
+  }, [torneoId]);
 
-    if (!jornada) return;
+  useEffect(() => {
+    if (!jornadaNumero) return;
 
     const cargarDatos = async () => {
-
       setMensaje("");
+      setPartidos([]);
       setPartidosIncompletos([]);
+      setPronosticosUsuario({});
+      setMarcadoresUsuario({});
 
-      await cargarPartidos();
-      await cargarPronosticosUsuario();
-      await verificarEstadoJornada();
+      const jornada = await cargarJornadaActual();
+      if (!jornada?.id) return;
 
+      await cargarPartidos(jornada.id);
+      await cargarPronosticosUsuario(jornada.id);
     };
 
     cargarDatos();
+  }, [jornadaNumero]);
 
-  }, [jornada]);
-
-  /*
-  ===============================
-  ACTUALIZAR MARCADOR
-  ===============================
-  */
+  // ── Acciones pronósticos ──────────────────────────────────────────────
   const actualizarMarcador = (partidoId, campo, valor) => {
-    setMarcadoresUsuario(prev => ({
+    setMarcadoresUsuario((prev) => ({
       ...prev,
       [partidoId]: {
         ...prev[partidoId],
-        [campo]: valor === "" ? "" : Number(valor)
-      }
+        [campo]: valor === "" ? "" : Number(valor),
+      },
     }));
   };
 
-  /*
-  ===============================
-  SELECCIONAR RESULTADO
-  ===============================
-  */
   const seleccionarResultado = (partidoId, resultado) => {
-    setPronosticosUsuario(prev => ({
+    setPronosticosUsuario((prev) => ({
       ...prev,
-      [partidoId]: resultado
+      [partidoId]: resultado,
     }));
   };
 
-  /*
-  ===============================
-  GUARDAR JORNADA
-  ===============================
-  */
   const guardarJornadaCompleta = async () => {
     if (!jornadaAbierta) {
       setMensaje("🔒 La jornada ya está cerrada");
       return;
     }
 
-    const incompletos = partidos.filter(partido => {
+    if (partidos.length === 0) {
+      setMensaje("⚠ Esta jornada no tiene partidos configurados");
+      return;
+    }
+
+    const incompletos = partidos.filter((partido) => {
       const resultado = pronosticosUsuario[partido.id];
-      const marcadorLocal = marcadoresUsuario[partido.id]?.local;
-      const marcadorVisitante = marcadoresUsuario[partido.id]?.visitante;
+      const local = marcadoresUsuario[partido.id]?.local;
+      const visitante = marcadoresUsuario[partido.id]?.visitante;
 
       return (
         !resultado ||
-        marcadorLocal === undefined ||
-        marcadorVisitante === undefined ||
-        marcadorLocal === "" ||
-        marcadorVisitante === ""
+        local === undefined || local === "" ||
+        visitante === undefined || visitante === ""
       );
     });
 
     if (incompletos.length > 0) {
-      setPartidosIncompletos(incompletos.map(p => p.id));
+      setPartidosIncompletos(incompletos.map((p) => p.id));
       setMensaje(`⚠ Faltan ${incompletos.length} pronóstico(s)`);
       return;
     }
@@ -251,11 +246,11 @@ function App({ onLogout }) {
     setPartidosIncompletos([]);
     setMensaje("Guardando pronósticos...");
 
-    const pronosticos = partidos.map(partido => ({
+    const pronosticos = partidos.map((partido) => ({
       partido_id: partido.id,
       resultado: pronosticosUsuario[partido.id],
       marcador_local: Number(marcadoresUsuario[partido.id].local),
-      marcador_visitante: Number(marcadoresUsuario[partido.id].visitante)
+      marcador_visitante: Number(marcadoresUsuario[partido.id].visitante),
     }));
 
     try {
@@ -263,102 +258,108 @@ function App({ onLogout }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(pronosticos)
+        body: JSON.stringify(pronosticos),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setMensaje(`❌ ${data.mensaje || "Error guardando pronósticos"}`);
-
-        if (response.status === 403) {
-          setJornadaAbierta(false);
-        }
-
+        if (response.status === 403) setJornadaAbierta(false);
         return;
       }
 
       setMensaje(`✅ ${data.mensaje}`);
-      setRefreshRanking(prev => !prev);
-
-      await cargarPronosticosUsuario();
-      await verificarEstadoJornada();
+      setRefreshRanking((prev) => !prev);
+      if (jornadaId) await cargarPronosticosUsuario(jornadaId);
     } catch (error) {
       console.error("Error guardando jornada:", error);
       setMensaje("❌ Error de conexión con el servidor");
     }
   };
 
-  /*
-  ===============================
-  UI
-  ===============================
-  */
+  // ── Render ────────────────────────────────────────────────────────────
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">
           Pronósticos Quiniela ⚽
         </h1>
 
-        {jornada && (
+        {jornadaNumero && (
           <TimerJornada
-            key={jornada}
-            jornada={jornada}
+            key={jornadaNumero}
+            jornada={jornadaNumero}
             onCerrarJornada={() => setJornadaAbierta(false)}
           />
         )}
 
         <button
           onClick={onLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
         >
           Cerrar sesión
         </button>
       </div>
 
-      <div className="mb-6">
-        <label className="mr-2 font-semibold">
-          Seleccionar jornada:
-        </label>
+      <div className="mb-6 flex flex-wrap gap-4 items-center">
+        {torneos.length > 1 && (
+          <div>
+            <label className="mr-2 font-semibold">Torneo:</label>
+            <select
+              value={torneoId}
+              onChange={(e) => setTorneoId(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              {torneos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <select
-          value={jornada || ""}
-          onChange={(e) => setJornada(Number(e.target.value))}
-          className="border rounded px-2 py-1"
-        >
-          {listaJornadas.map(j => (
-            <option key={j.id} value={j.id}>
-              Jornada {j.numero}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label className="mr-2 font-semibold">Jornada:</label>
+          <select
+            value={jornadaNumero}
+            onChange={(e) => setJornadaNumero(e.target.value)}
+            className="border rounded px-2 py-1"
+          >
+            {listaJornadas.map((j) => (
+              <option key={`jornada-${j.id}`} value={j.numero}>
+                Jornada {j.numero}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <Tabs defaultValue="pronosticos">
-        <TabsList>
-          <TabsTrigger value="pronosticos">
-            📊 Pronósticos
-          </TabsTrigger>
-
-          <TabsTrigger value="ranking">
-            🏆 Ranking
-          </TabsTrigger>
-
-          <TabsTrigger value="historial">
-            📈 Historial
-          </TabsTrigger>
-
-          <TabsTrigger value="misResultados">
-            📋 Mis resultados
-          </TabsTrigger>
-
-          <TabsTrigger value="historico-general">
-            📊 Histórico general
-          </TabsTrigger>
+      <Tabs defaultValue="inicio">
+        <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="inicio">🏠 Inicio</TabsTrigger>
+          <TabsTrigger value="pronosticos">📊 Pronósticos</TabsTrigger>
+          <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
+          <TabsTrigger value="historial">📈 Historial</TabsTrigger>
+          <TabsTrigger value="misResultados">📋 Mis resultados</TabsTrigger>
+          <TabsTrigger value="historico-general">📊 Histórico general</TabsTrigger>
+          <TabsTrigger value="tabla-general">🏆 Tabla General</TabsTrigger>
+          <TabsTrigger value="perfil">👤 Mi Perfil</TabsTrigger>
+          <TabsTrigger value="historico-pronosticos">📚 Histórico pronósticos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="inicio">
+          <Dashboard
+            jornadaActual={jornadaActual}
+            jornadaAbierta={jornadaAbierta}
+            partidos={partidos}
+            pronosticosUsuario={pronosticosUsuario}
+            torneoId={torneoId}
+          />
+        </TabsContent>
 
         <TabsContent value="pronosticos">
           <div
@@ -366,7 +367,8 @@ function App({ onLogout }) {
               mt-4 mb-3 px-4 py-2 rounded-lg font-semibold
               ${jornadaAbierta
                 ? "bg-green-100 text-green-700 border border-green-300"
-                : "bg-red-100 text-red-700 border border-red-300"}
+                : "bg-red-100 text-red-700 border border-red-300"
+              }
             `}
           >
             {jornadaAbierta
@@ -385,30 +387,25 @@ function App({ onLogout }) {
 
           <p className="mt-2">{mensaje}</p>
 
-          {partidos.map(partido => {
+          {partidos.length === 0 && (
+            <p className="mt-6 text-gray-500">
+              No hay partidos configurados para esta jornada.
+            </p>
+          )}
+
+          {partidos.map((partido) => {
             const incompleto = partidosIncompletos.includes(partido.id);
 
             return (
               <Card
-                key={partido.id}
-                className={`
-                  mt-5 shadow-md border
-                  ${incompleto ? "border-red-500" : ""}
-                `}
+                key={`partido-${partido.id}`}
+                className={`mt-5 shadow-md border ${incompleto ? "border-red-500" : ""}`}
               >
                 <CardContent className="p-5">
                   <div className="flex justify-between items-center">
-                    <div className="text-lg font-semibold">
-                      {partido.local}
-                    </div>
-
-                    <div className="text-gray-400">
-                      VS
-                    </div>
-
-                    <div className="text-lg font-semibold">
-                      {partido.visitante}
-                    </div>
+                    <div className="text-lg font-semibold">{partido.local}</div>
+                    <div className="text-gray-400">VS</div>
+                    <div className="text-lg font-semibold">{partido.visitante}</div>
                   </div>
 
                   {partido.es_comodin && (
@@ -423,17 +420,8 @@ function App({ onLogout }) {
                       min="0"
                       disabled={!jornadaAbierta}
                       value={marcadoresUsuario[partido.id]?.local ?? ""}
-                      onChange={(e) =>
-                        actualizarMarcador(
-                          partido.id,
-                          "local",
-                          e.target.value
-                        )
-                      }
-                      className={`
-                        border rounded w-16 text-center text-lg
-                        ${!jornadaAbierta ? "bg-gray-200 cursor-not-allowed" : ""}
-                      `}
+                      onChange={(e) => actualizarMarcador(partido.id, "local", e.target.value)}
+                      className={`border rounded w-16 text-center text-lg ${!jornadaAbierta ? "bg-gray-200 cursor-not-allowed" : ""}`}
                     />
 
                     <span className="text-xl font-bold">-</span>
@@ -443,59 +431,33 @@ function App({ onLogout }) {
                       min="0"
                       disabled={!jornadaAbierta}
                       value={marcadoresUsuario[partido.id]?.visitante ?? ""}
-                      onChange={(e) =>
-                        actualizarMarcador(
-                          partido.id,
-                          "visitante",
-                          e.target.value
-                        )
-                      }
-                      className={`
-                        border rounded w-16 text-center text-lg
-                        ${!jornadaAbierta ? "bg-gray-200 cursor-not-allowed" : ""}
-                      `}
+                      onChange={(e) => actualizarMarcador(partido.id, "visitante", e.target.value)}
+                      className={`border rounded w-16 text-center text-lg ${!jornadaAbierta ? "bg-gray-200 cursor-not-allowed" : ""}`}
                     />
                   </div>
 
                   <div className="flex justify-center gap-3 mt-5">
-                    {["L", "E", "V"].map(opcion => {
-                      const seleccionado =
-                        pronosticosUsuario[partido.id] === opcion;
+                    {["L", "E", "V"].map((opcion) => {
+                      const seleccionado = pronosticosUsuario[partido.id] === opcion;
 
                       const colores = {
-                        L: seleccionado
-                          ? "bg-blue-600 text-white"
-                          : "border-blue-400 text-blue-600",
-
-                        E: seleccionado
-                          ? "bg-yellow-400 text-black"
-                          : "border-yellow-400 text-yellow-600",
-
-                        V: seleccionado
-                          ? "bg-red-600 text-white"
-                          : "border-red-400 text-red-600"
+                        L: seleccionado ? "bg-blue-600 text-white" : "border-blue-400 text-blue-600",
+                        E: seleccionado ? "bg-yellow-400 text-black" : "border-yellow-400 text-yellow-600",
+                        V: seleccionado ? "bg-red-600 text-white" : "border-red-400 text-red-600",
                       };
 
                       return (
                         <button
-                          key={opcion}
+                          key={`partido-${partido.id}-opcion-${opcion}`}
                           disabled={!jornadaAbierta}
-                          onClick={() =>
-                            seleccionarResultado(partido.id, opcion)
-                          }
+                          onClick={() => seleccionarResultado(partido.id, opcion)}
                           className={`
-                            px-5 py-2 rounded-lg border
-                            font-semibold transition-all
-                            hover:scale-105
+                            px-5 py-2 rounded-lg border font-semibold transition-all hover:scale-105
                             ${colores[opcion]}
                             ${!jornadaAbierta ? "opacity-50 cursor-not-allowed" : ""}
                           `}
                         >
-                          {opcion === "L"
-                            ? "Local"
-                            : opcion === "E"
-                              ? "Empate"
-                              : "Visitante"}
+                          {opcion === "L" ? "Local" : opcion === "E" ? "Empate" : "Visitante"}
                         </button>
                       );
                     })}
@@ -507,20 +469,31 @@ function App({ onLogout }) {
         </TabsContent>
 
         <TabsContent value="ranking">
-          <Ranking refresh={refreshRanking} jornada={jornada} />
+          <Ranking refresh={refreshRanking} jornada={jornadaId} />
         </TabsContent>
 
         <TabsContent value="historial">
-          <RankingHistorial />
+          <RankingHistorial torneoId={torneoId} />
         </TabsContent>
 
         <TabsContent value="misResultados">
-          <MisResultados />
+          <MisResultados torneoId={torneoId} />
         </TabsContent>
 
         <TabsContent value="historico-general">
-          <HistoricoGeneral jornada={jornada} />
-          {rol === "admin" && <AdminJornadas />}
+          <HistoricoGeneral jornada={jornadaId} />
+        </TabsContent>
+
+        <TabsContent value="tabla-general">
+          <TablaGeneral torneoId={torneoId} />
+        </TabsContent>
+
+        <TabsContent value="perfil">
+          <PerfilJugador />
+        </TabsContent>
+
+        <TabsContent value="historico-pronosticos">
+          <HistoricoPronosticos torneoId={torneoId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -2,77 +2,78 @@ import { useEffect, useState } from "react";
 import { API } from "./config/api";
 
 function MisResultados() {
-  const [pronosticos, setPronosticos] = useState([]);
-  const [mensaje, setMensaje] = useState("");
+  const [partidos, setPartidos] = useState([]);
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    cargarPronosticos();
-  }, []);
-
-  const cargarPronosticos = async () => {
-    if (!token) {
-      setMensaje("Sesión no disponible");
-      return;
-    }
-
+  const cargarResultados = async () => {
     try {
-      setMensaje("Cargando resultados...");
       const response = await fetch(`${API}/pronosticos/usuario`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json().catch(() => null);
 
-      if (!response.ok || !Array.isArray(data)) {
-        setPronosticos([]);
-        setMensaje(data?.mensaje || "No se pudieron cargar tus resultados");
-        return;
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        setPartidos(data);
+      } else {
+        console.log("Respuesta backend:", data);
+        setPartidos([]);
       }
-
-      setPronosticos(data);
-      setMensaje("");
     } catch (error) {
-      console.error("Error cargando mis resultados:", error);
-      setMensaje("Error cargando tus resultados");
+      console.error("Error cargando resultados:", error);
     }
   };
 
-  return (
-    <div className="overflow-x-auto mt-6">
-      {mensaje && <p className="mb-3 text-sm text-gray-600">{mensaje}</p>}
+  useEffect(() => {
+    if (token) cargarResultados();
+  }, [token]);
 
-      <table className="min-w-full border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Jornada</th>
-            <th className="border p-2">Partido</th>
-            <th className="border p-2">Pronóstico</th>
-            <th className="border p-2">Resultado oficial</th>
-            <th className="border p-2">Puntos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pronosticos.length === 0 ? (
-            <tr>
-              <td className="border p-3 text-center" colSpan="5">Sin pronósticos</td>
-            </tr>
-          ) : (
-            pronosticos.map((p, index) => (
-              <tr key={`${p.partido_id}-${index}`}>
-                <td className="border p-2 text-center">{p.jornada_numero || p.jornada_id}</td>
-                <td className="border p-2">{p.local} vs {p.visitante}</td>
-                <td className="border p-2 text-center">
-                  {p.pronostico_usuario || p.resultado || "-"} ({p.marcador_local ?? "-"}-{p.marcador_visitante ?? "-"})
-                </td>
-                <td className="border p-2 text-center">
-                  {p.goles_local === null || p.goles_local === undefined ? "Pendiente" : `${p.goles_local}-${p.goles_visitante}`}
-                </td>
-                <td className="border p-2 text-center font-bold">{Number(p.puntos || 0)}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+  const textoResultado = (valor) => {
+    if (valor === "L") return "Local";
+    if (valor === "V") return "Visitante";
+    return "Empate";
+  };
+
+  return (
+    <div style={{ marginTop: "40px" }}>
+      <h2>Resultados de tus pronósticos 📊</h2>
+
+      {partidos.map((partido) => {
+        const tieneResultado =
+          partido.goles_local !== null && partido.goles_local !== undefined &&
+          partido.goles_visitante !== null && partido.goles_visitante !== undefined;
+
+        const resultadoReal = tieneResultado
+          ? partido.goles_local > partido.goles_visitante
+            ? "Local"
+            : partido.goles_visitante > partido.goles_local
+              ? "Visitante"
+              : "Empate"
+          : "Pendiente";
+
+        return (
+          <div key={`mis-resultados-${partido.partido_id}`} style={{ marginBottom: "15px" }}>
+            <strong>{partido.local} vs {partido.visitante}</strong>
+            {partido.es_comodin && (
+              <span style={{ marginLeft: "10px", color: "orange" }}>⭐ Comodín</span>
+            )}
+            <br />
+            <span>
+              Tu pronóstico: <b>{textoResultado(partido.pronostico_usuario)} ({partido.marcador_local} - {partido.marcador_visitante})</b>
+            </span>
+            <br />
+            {tieneResultado && (
+              <span>Resultado real: <b>{resultadoReal} ({partido.goles_local} - {partido.goles_visitante})</b></span>
+            )}
+            <br />
+            {Number(partido.puntos) > 0 ? (
+              <span style={{ color: "green" }}>✅ +{partido.puntos} puntos</span>
+            ) : (
+              <span style={{ color: "red" }}>❌ 0 puntos</span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

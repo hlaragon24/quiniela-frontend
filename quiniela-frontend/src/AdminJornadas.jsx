@@ -1,580 +1,218 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
 
-function AdminJornadas() {
-
+function AdminJornadas({ torneoId }) {
   const [jornadas, setJornadas] = useState([]);
   const [numero, setNumero] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaCierre, setFechaCierre] = useState("");
-
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [jornadaEditandoId, setJornadaEditandoId] = useState(null);
+  const [mensaje, setMensaje] = useState("");
 
   const token = localStorage.getItem("token");
 
-
-  /*
-  ============================
-  CARGAR JORNADAS
-  ============================
-  */
-
   const cargarJornadas = async () => {
+    if (!torneoId) return;
 
     try {
-
-      const response = await fetch(
-        `${API}/jornadas`
-      );
-
+      const response = await fetch(`${API}/jornadas?torneo_id=${torneoId}`);
       const data = await response.json();
-
-      setJornadas(data);
-
-    }
-
-    catch (error) {
-
+      if (Array.isArray(data)) setJornadas(data);
+    } catch (error) {
       console.error(error);
-
     }
-
   };
-
 
   useEffect(() => {
-
     cargarJornadas();
-
-  }, []);
-
-
-  /*
-  ============================
-  CREAR / EDITAR JORNADA
-  ============================
-  */
+  }, [torneoId]);
 
   const guardarJornada = async () => {
+    if (!torneoId) {
+      setMensaje("⚠ No hay torneo seleccionado");
+      return;
+    }
 
     try {
-
-      const url = modoEdicion
-        ? `${API}/jornadas/${jornadaEditandoId}`
-        : `${API}/jornadas`;
-
+      const url = modoEdicion ? `${API}/jornadas/${numero}` : `${API}/jornadas`;
       const method = modoEdicion ? "PUT" : "POST";
 
-
       const response = await fetch(url, {
-
         method,
-
         headers: {
-
           "Content-Type": "application/json",
-
-          Authorization: `Bearer ${token}`
-
+          Authorization: `Bearer ${token}`,
         },
-
         body: JSON.stringify({
-
           numero,
-
           fecha_inicio: fechaInicio,
-
-          fecha_cierre: fechaCierre
-
-        })
-
+          fecha_cierre: fechaCierre,
+          torneo_id: torneoId,
+        }),
       });
 
-
       const data = await response.json();
-
-      alert(data.mensaje);
-
+      setMensaje(data.mensaje || (modoEdicion ? "Jornada actualizada" : "Jornada creada"));
       limpiarFormulario();
-
       cargarJornadas();
-
-    }
-
-    catch (error) {
-
+    } catch (error) {
       console.error(error);
-
+      setMensaje("Error guardando jornada");
     }
-
   };
-
-
-  /*
-  ============================
-  CARGAR DATOS PARA EDITAR
-  ============================
-  */
 
   const editarJornada = (jornada) => {
-
-    setJornadaEditandoId(jornada.id);
     setNumero(jornada.numero);
-
-    setFechaInicio(
-      jornada.fecha_inicio?.slice(0, 16)
-    );
-
-    setFechaCierre(
-      jornada.fecha_cierre?.slice(0, 16)
-    );
-
+    setFechaInicio(jornada.fecha_inicio?.slice(0, 16));
+    setFechaCierre(jornada.fecha_cierre?.slice(0, 16));
     setModoEdicion(true);
-
   };
 
-
-  /*
-  ============================
-  ELIMINAR JORNADA
-  ============================
-  */
-
-  const eliminarJornada = async (id) => {
-
+  const eliminarJornada = async (num) => {
     if (!window.confirm("¿Eliminar jornada?")) return;
 
     try {
-
-      const response = await fetch(
-        `${API}/jornadas/${id}`,
-        {
-
-          method: "DELETE",
-
-          headers: {
-
-            Authorization: `Bearer ${token}`
-
-          }
-
-        }
-
-      );
+      const response = await fetch(`${API}/jornadas/${num}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const data = await response.json();
-
-      alert(data.mensaje);
-
+      setMensaje(data.mensaje || "Jornada eliminada");
       cargarJornadas();
-
-    }
-
-    catch (error) {
-
+    } catch (error) {
       console.error(error);
-
+      setMensaje("Error eliminando jornada");
     }
-
   };
 
-
-  /*
-  ============================
-  CERRAR JORNADA
-  ============================
-  */
-
-  const cerrarJornada = async (id) => {
-
+  const cerrarJornada = async (num) => {
     try {
+      const response = await fetch(`${API}/jornadas/${num}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fecha_cierre: new Date().toISOString() }),
+      });
 
-      const response = await fetch(
-        `${API}/jornadas/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            fecha_cierre: new Date().toISOString()
-          })
-        }
-      );
-
-      if (!response.ok) {
-
-        throw new Error("No se pudo cerrar la jornada");
-
-      }
+      if (!response.ok) throw new Error("No se pudo cerrar la jornada");
 
       const data = await response.json();
-
-      alert(data.mensaje || "Jornada cerrada correctamente");
-
+      setMensaje(data.mensaje || "Jornada cerrada correctamente");
       cargarJornadas();
-
-    }
-
-    catch (error) {
-
+    } catch (error) {
       console.error(error);
-
-      alert("Error cerrando jornada");
-
+      setMensaje("Error cerrando jornada");
     }
-
   };
-
-
-  /*
-  ============================
-  LIMPIAR FORMULARIO
-  ============================
-  */
 
   const limpiarFormulario = () => {
-
     setNumero("");
-
     setFechaInicio("");
-
     setFechaCierre("");
-
     setModoEdicion(false);
-    setJornadaEditandoId(null);
-
   };
 
-
   return (
-
     <div>
+      <h2 className="text-xl font-bold mb-4">Gestión de Jornadas 📅</h2>
 
-      <h2>Gestión de Jornadas 📅</h2>
-
-
-      {/* FORMULARIO */}
-
-      <div style={{
-
-        display: "flex",
-
-        gap: "10px",
-
-        marginBottom: "20px"
-
-      }}>
-
-
+      <div className="flex flex-wrap gap-2.5 mb-5">
         <input
-
           placeholder="Número jornada"
-
           value={numero}
-
           onChange={(e) => setNumero(e.target.value)}
-
-          style={inputStyle}
-
+          className="p-2 rounded border border-gray-300"
         />
 
-
         <input
-
           type="datetime-local"
-
           value={fechaInicio}
-
           onChange={(e) => setFechaInicio(e.target.value)}
-
-          style={inputStyle}
-
+          className="p-2 rounded border border-gray-300"
         />
-
 
         <input
-
           type="datetime-local"
-
           value={fechaCierre}
-
           onChange={(e) => setFechaCierre(e.target.value)}
-
-          style={inputStyle}
-
+          className="p-2 rounded border border-gray-300"
         />
-
 
         <button
-
           onClick={guardarJornada}
-
-          style={botonAzul}
-
+          className="bg-blue-600 text-white px-3.5 py-2 rounded hover:bg-blue-700"
         >
-
           {modoEdicion ? "Actualizar" : "Crear"}
-
         </button>
 
-
-        {
-
-          modoEdicion && (
-
-            <button
-
-              onClick={limpiarFormulario}
-
-              style={botonGris}
-
-            >
-
-              Cancelar
-
-            </button>
-
-          )
-
-        }
-
-
+        {modoEdicion && (
+          <button
+            onClick={limpiarFormulario}
+            className="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600"
+          >
+            Cancelar
+          </button>
+        )}
       </div>
 
+      {mensaje && (
+        <p className="mb-4 text-sm font-medium text-gray-700">{mensaje}</p>
+      )}
 
-      <hr />
+      <hr className="mb-4" />
 
-
-      {/* LISTA JORNADAS */}
-
-
-      {
-
-        jornadas.map(j => (
-
-          <div key={j.id} style={cardStyle}>
-
-
-            <div>
-
-              <strong>
-
-                Jornada {j.numero}
-
-                <span
-                  style={{
-                    marginLeft: "10px",
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    background:
-                      j.estado === "cerrada"
-                        ? "#dc2626"
-                        : "#16a34a",
-                    color: "white",
-                    fontSize: "12px"
-                  }}
-                >
-
-                  {j.estado}
-
-                </span>
-
-              </strong>
-
-
-              <br />
-
-              Inicio:
-
-              {new Date(j.fecha_inicio).toLocaleString()}
-
-
-              <br />
-
-              Cierre:
-
-              {new Date(j.fecha_cierre).toLocaleString()}
-
-            </div>
-
-
-            <div style={{ display: "flex", gap: "8px" }}>
-
-
-              <button
-
-                onClick={() => editarJornada(j)}
-
-                style={botonVerde}
-
+      {jornadas.map((j) => (
+        <div key={j.numero} className="flex justify-between items-center p-3 border-b border-gray-300">
+          <div>
+            <strong>
+              Jornada {j.numero}{" "}
+              <span
+                className={`ml-2 px-2 py-0.5 rounded text-xs text-white font-semibold ${
+                  j.estado === "cerrada" ? "bg-red-600" : "bg-green-600"
+                }`}
               >
+                {j.estado}
+              </span>
+            </strong>
 
-                Editar
-
-              </button>
-
-
-              <button
-                disabled={j.estado === "cerrada"}
-                onClick={() => cerrarJornada(j.id)}
-                style={{
-                  ...botonNaranja,
-                  opacity: j.estado === "cerrada" ? 0.5 : 1,
-                  cursor: j.estado === "cerrada" ? "not-allowed" : "pointer"
-                }}
-              >
-                Cerrar
-              </button>
-
-
-              <button
-
-                onClick={() => eliminarJornada(j.id)}
-
-                style={botonRojo}
-
-              >
-
-                Eliminar
-
-              </button>
-
-
-            </div>
-
-
+            <br />
+            Inicio: {new Date(j.fecha_inicio).toLocaleString()}
+            <br />
+            Cierre: {new Date(j.fecha_cierre).toLocaleString()}
           </div>
 
-        ))
+          <div className="flex gap-2">
+            <button
+              onClick={() => editarJornada(j)}
+              className="bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700"
+            >
+              Editar
+            </button>
 
-      }
+            <button
+              disabled={j.estado === "cerrada"}
+              onClick={() => cerrarJornada(j.numero)}
+              className={`bg-orange-600 text-white px-3 py-1.5 rounded hover:bg-orange-700 ${
+                j.estado === "cerrada" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
+            >
+              Cerrar
+            </button>
 
-
+            <button
+              onClick={() => eliminarJornada(j.numero)}
+              className="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
-
   );
-
 }
-
-
-/*
-============================
-ESTILOS
-============================
-*/
-
-const inputStyle = {
-
-  padding: "8px",
-
-  borderRadius: "6px",
-
-  border: "1px solid #ccc"
-
-};
-
-
-const botonAzul = {
-
-  background: "#2563eb",
-
-  color: "white",
-
-  padding: "8px 14px",
-
-  border: "none",
-
-  borderRadius: "6px",
-
-  cursor: "pointer"
-
-};
-
-
-const botonVerde = {
-
-  background: "#16a34a",
-
-  color: "white",
-
-  padding: "6px 12px",
-
-  border: "none",
-
-  borderRadius: "6px",
-
-  cursor: "pointer"
-
-};
-
-
-const botonNaranja = {
-
-  background: "#ea580c",
-
-  color: "white",
-
-  padding: "6px 12px",
-
-  border: "none",
-
-  borderRadius: "6px",
-
-  cursor: "pointer"
-
-};
-
-
-const botonRojo = {
-
-  background: "#dc2626",
-
-  color: "white",
-
-  padding: "6px 12px",
-
-  border: "none",
-
-  borderRadius: "6px",
-
-  cursor: "pointer"
-
-};
-
-
-const botonGris = {
-
-  background: "#6b7280",
-
-  color: "white",
-
-  padding: "6px 12px",
-
-  border: "none",
-
-  borderRadius: "6px",
-
-  cursor: "pointer"
-
-};
-
-
-const cardStyle = {
-
-  display: "flex",
-
-  justifyContent: "space-between",
-
-  alignItems: "center",
-
-  padding: "12px",
-
-  borderBottom: "1px solid #ddd"
-
-};
-
 
 export default AdminJornadas;

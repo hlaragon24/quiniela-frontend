@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import Login from "./Login";
-import Quiniela from "./Quiniela";
+import App from "./App";
 import AdminResultados from "./AdminResultados";
 
 import { useState } from "react";
@@ -18,6 +18,9 @@ function Root() {
   const cerrarSesion = () => {
 
     localStorage.removeItem("token");
+    localStorage.removeItem("rol");
+    localStorage.removeItem("nombre");
+    localStorage.removeItem("usuario_id");
 
     setSesionActiva(null);
 
@@ -32,9 +35,15 @@ function Root() {
 
   // detectar rol admin desde token
 
-  const payload = JSON.parse(
-    atob(token.split(".")[1])
-  );
+  let payload = {};
+
+  try {
+    payload = JSON.parse(atob(token.split(".")[1]));
+  } catch (error) {
+    console.error("Token inválido:", error);
+    localStorage.removeItem("token");
+    return <Login onLogin={setSesionActiva} />;
+  }
 
   const esAdmin = payload.rol === "admin";
 
@@ -44,7 +53,7 @@ if (esAdmin) {
 }
 
 
-  return <Quiniela onLogout={cerrarSesion} />;
+  return <App onLogout={cerrarSesion} />;
 
 }
 

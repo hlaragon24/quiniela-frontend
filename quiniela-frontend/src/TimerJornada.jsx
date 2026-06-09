@@ -19,19 +19,19 @@ function TimerJornada({ jornada, onCerrarJornada }) {
     const iniciarTimer = async () => {
       try {
         setTiempoRestante("Cargando...");
-        setColorClase("bg-green-100 text-green-700 border-green-300");
 
         const response = await fetch(`${API}/jornadas/${jornada}`);
-        const data = await response.json().catch(() => null);
 
-        if (!response.ok || !data) {
-          console.warn("Jornada no encontrada:", jornada, data);
+        if (!response.ok) {
+          console.warn("Jornada no encontrada:", jornada);
           setTiempoRestante("Sin fecha configurada");
           return;
         }
 
-        if (!data.fecha_cierre) {
-          console.warn("fecha_cierre no existe", data);
+        const data = await response.json();
+
+        if (!data?.fecha_cierre) {
+          console.warn("fecha_cierre no existe");
           setTiempoRestante("Sin fecha configurada");
           return;
         }
@@ -100,7 +100,8 @@ function TimerJornada({ jornada, onCerrarJornada }) {
         ${colorClase}
       `}
     >
-      ⏱️ Cierre en: <span>{tiempoRestante}</span>
+      ⏱️ Cierre en:
+      <span>{tiempoRestante}</span>
     </div>
   );
 }
