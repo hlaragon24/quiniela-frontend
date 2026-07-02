@@ -38,6 +38,10 @@ function App({ onLogout }) {
   const [partidosIncompletos, setPartidosIncompletos] = useState([]);
   const [listaJornadas, setListaJornadas] = useState([]);
 
+  const [torneoTipo, setTorneoTipo]           = useState("temporada");
+  const [miPagoTemporada, setMiPagoTemporada] = useState(null);   // {pagado} o null
+  const [misPagosJornada, setMisPagosJornada] = useState({});     // { jornadaId: bool }
+
   const token = localStorage.getItem("token");
 
   const jornadaId = jornadaActual?.id ?? null;
@@ -57,6 +61,27 @@ function App({ onLogout }) {
       if (data.length > 0) setTorneoId(data[0].id);
     } catch (error) {
       console.error("Error cargando torneos:", error);
+    }
+  };
+
+  const cargarMiPago = async (tid, tipo) => {
+    try {
+      const res  = await fetch(`${API}/pagos/mi-pago?torneo_id=${tid}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { setMiPagoTemporada(null); setMisPagosJornada({}); return; }
+      const data = await res.json();
+      if (tipo === "jornada" && Array.isArray(data)) {
+        const mapa = {};
+        data.forEach((p) => { mapa[p.jornada_id] = Boolean(p.pagado); });
+        setMisPagosJornada(mapa);
+        setMiPagoTemporada(null);
+      } else {
+        setMiPagoTemporada(data);
+        setMisPagosJornada({});
+      }
+    } catch (e) {
+      console.error("Error cargando mi pago:", e);
     }
   };
 
@@ -174,9 +199,15 @@ function App({ onLogout }) {
 
   useEffect(() => {
     if (!torneoId) return;
+    const torneo = torneos.find((t) => t.id == torneoId);
+    const tipo   = torneo?.tipo ?? "temporada";
+    setTorneoTipo(tipo);
     setJornadaNumero("");
     setListaJornadas([]);
+    setMiPagoTemporada(null);
+    setMisPagosJornada({});
     cargarJornadas(torneoId);
+    cargarMiPago(torneoId, tipo);
   }, [torneoId]);
 
   useEffect(() => {
@@ -350,11 +381,14 @@ function App({ onLogout }) {
             onChange={(e) => setJornadaNumero(e.target.value)}
             className="border rounded px-2 py-1"
           >
-            {listaJornadas.map((j) => (
-              <option key={`jornada-${j.id}`} value={j.numero}>
-                Jornada {j.numero}
-              </option>
-            ))}
+            {listaJornadas.map((j) => {
+              const bloqueada = torneoTipo === "jornada" && misPagosJornada[j.id] === false;
+              return (
+                <option key={`jornada-${j.id}`} value={j.numero}>
+                  {bloqueada ? "🔒 " : ""}Jornada {j.numero}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -383,6 +417,26 @@ function App({ onLogout }) {
         </TabsContent>
 
         <TabsContent value="pronosticos">
+          {/* Banner pago pendiente — temporada */}
+          {torneoTipo === "temporada" && miPagoTemporada?.pagado === false && (
+            <div className="mt-4 mb-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300">
+              <p className="font-semibold text-yellow-700">💳 Pago pendiente</p>
+              <p className="text-sm text-yellow-600 mt-1">
+                Tu pago para este torneo no ha sido confirmado. Contacta al administrador para activar tu acceso.
+              </p>
+            </div>
+          )}
+
+          {/* Banner pago pendiente — jornada */}
+          {torneoTipo === "jornada" && jornadaId && misPagosJornada[jornadaId] === false && (
+            <div className="mt-4 mb-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300">
+              <p className="font-semibold text-yellow-700">💳 Pago pendiente para esta jornada</p>
+              <p className="text-sm text-yellow-600 mt-1">
+                Tu pago para esta jornada no ha sido confirmado. Contacta al administrador.
+              </p>
+            </div>
+          )}
+
           <div
             className={`
               mt-4 mb-3 px-4 py-2 rounded-lg font-semibold

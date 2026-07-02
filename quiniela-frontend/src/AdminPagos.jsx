@@ -162,6 +162,12 @@ function AdminPagos({ torneoId }) {
         </span>
       </div>
 
+      {/* Nota de acceso */}
+      <div className="text-sm bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-5 text-blue-700">
+        ℹ️ Marcar a un jugador como <strong>Pagado ✅</strong> le otorga acceso para guardar pronósticos.
+        Mientras esté <strong>Pendiente ❌</strong>, el sistema le bloqueará al intentar enviar.
+      </div>
+
       {/* Selector de jornada (solo tipo='jornada') */}
       {torneoInfo.tipo === "jornada" && (
         <div className="mb-5">
