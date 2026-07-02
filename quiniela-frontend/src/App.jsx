@@ -9,6 +9,7 @@ import TablaGeneral from "./TablaGeneral";
 import PerfilJugador from "./PerfilJugador";
 import HistoricoPronosticos from "./HistoricoPronosticos";
 import { API } from "./config/api";
+import TeamShield from "./components/TeamShield";
 
 import {
   Tabs,
@@ -422,10 +423,20 @@ function App({ onLogout }) {
                 className={`mt-5 shadow-md border ${incompleto ? "border-red-500" : ""}`}
               >
                 <CardContent className="p-5">
-                  <div className="flex justify-between items-center">
-                    <div className="text-lg font-semibold">{partido.local}</div>
-                    <div className="text-gray-400">VS</div>
-                    <div className="text-lg font-semibold">{partido.visitante}</div>
+                  <div className="flex justify-between items-center gap-2">
+                    <TeamShield
+                      nombre={partido.local}
+                      escudoUrl={partido.escudo_local}
+                      color={partido.color_local}
+                      size="md"
+                    />
+                    <div className="text-gray-400 font-bold">VS</div>
+                    <TeamShield
+                      nombre={partido.visitante}
+                      escudoUrl={partido.escudo_visitante}
+                      color={partido.color_visitante}
+                      size="md"
+                    />
                   </div>
 
                   {partido.es_comodin && (

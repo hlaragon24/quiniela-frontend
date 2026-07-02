@@ -8,7 +8,9 @@ import AdminCampeon from "./AdminCampeon";
 import HistoricoPronosticos from "./HistoricoPronosticos";
 import AdminPagos from "./AdminPagos";
 import AdminTorneos from "./AdminTorneos";
+import AdminEquipos from "./AdminEquipos";
 import { API } from "./config/api";
+import TeamShield from "./components/TeamShield";
 
 function AdminResultados({ onLogout }) {
     const [torneos, setTorneos] = useState([]);
@@ -188,6 +190,7 @@ function AdminResultados({ onLogout }) {
         { id: "campeon", label: "Campeón 👑" },
         { id: "historico", label: "Histórico 📚" },
         { id: "pagos", label: "Pagos 💰" },
+        { id: "equipos", label: "Equipos 🛡️" },
     ];
 
     return (
@@ -302,8 +305,18 @@ function AdminResultados({ onLogout }) {
                                         key={partido.id}
                                         className={`border-b border-gray-100 ${partido.es_comodin ? "bg-orange-50" : ""}`}
                                     >
-                                        <td className="p-2.5 w-1/5">{partido.local}</td>
-                                        <td className="p-2.5 w-1/5">{partido.visitante}</td>
+                                        <td className="p-2.5 w-1/5">
+                                            <div className="flex items-center gap-2">
+                                                <TeamShield nombre={partido.local} escudoUrl={partido.escudo_local} color={partido.color_local} size="sm" showName={false} />
+                                                {partido.local}
+                                            </div>
+                                        </td>
+                                        <td className="p-2.5 w-1/5">
+                                            <div className="flex items-center gap-2">
+                                                <TeamShield nombre={partido.visitante} escudoUrl={partido.escudo_visitante} color={partido.color_visitante} size="sm" showName={false} />
+                                                {partido.visitante}
+                                            </div>
+                                        </td>
                                         <td className="p-2.5">
                                             <div className="flex gap-1.5 items-center">
                                                 <input
@@ -356,6 +369,7 @@ function AdminResultados({ onLogout }) {
             {tab === "campeon" && <AdminCampeon torneoId={torneoId} />}
             {tab === "historico" && <HistoricoPronosticos torneoId={torneoId} />}
             {tab === "pagos" && <AdminPagos torneoId={torneoId} />}
+            {tab === "equipos" && <AdminEquipos />}
 
             {mensaje && <p className="mt-4 text-sm font-medium">{mensaje}</p>}
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
+import TeamShield from "./components/TeamShield";
 
 function AdminPartidos() {
     const [torneos, setTorneos] = useState([]);
@@ -258,8 +259,18 @@ function AdminPartidos() {
                         ) : (
                             partidosFiltrados.map((p) => (
                                 <tr key={p.id} className="border-b border-gray-100">
-                                    <td className="p-2.5">{p.local}</td>
-                                    <td className="p-2.5">{p.visitante}</td>
+                                    <td className="p-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <TeamShield nombre={p.local} escudoUrl={p.escudo_local} color={p.color_local} size="sm" showName={false} />
+                                            {p.local}
+                                        </div>
+                                    </td>
+                                    <td className="p-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <TeamShield nombre={p.visitante} escudoUrl={p.escudo_visitante} color={p.color_visitante} size="sm" showName={false} />
+                                            {p.visitante}
+                                        </div>
+                                    </td>
                                     <td className="p-2.5">{new Date(p.fecha).toLocaleString()}</td>
                                     <td className="p-2.5 text-center">{p.es_comodin ? "⭐" : ""}</td>
                                     <td className="p-2.5 flex gap-1.5">
