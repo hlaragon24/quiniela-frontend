@@ -428,14 +428,14 @@ function App({ onLogout }) {
                       nombre={partido.local}
                       escudoUrl={partido.escudo_local}
                       color={partido.color_local}
-                      size="md"
+                      size="lg"
                     />
-                    <div className="text-gray-400 font-bold">VS</div>
+                    <div className="text-gray-400 font-bold text-lg">VS</div>
                     <TeamShield
                       nombre={partido.visitante}
                       escudoUrl={partido.escudo_visitante}
                       color={partido.color_visitante}
-                      size="md"
+                      size="lg"
                     />
                   </div>
 

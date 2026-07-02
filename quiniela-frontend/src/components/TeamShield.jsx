@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 const SIZES = {
-  sm: { box: "w-8 h-8",   text: "text-xs"  },
-  md: { box: "w-12 h-12", text: "text-sm"  },
-  lg: { box: "w-16 h-16", text: "text-base" },
+  sm: { box: "w-10 h-10", text: "text-xs"  },
+  md: { box: "w-16 h-16", text: "text-sm"  },
+  lg: { box: "w-24 h-24", text: "text-sm"  },
 };
 
 export default function TeamShield({
