@@ -10,9 +10,8 @@ function HistoricoGeneral({ jornada }) {
 
 
   useEffect(() => {
-
+    if (!jornada) return;
     cargarHistorico();
-
   }, [jornada]);
 
 
@@ -51,8 +50,8 @@ function HistoricoGeneral({ jornada }) {
   };
 
 
-  if (!tabla.length)
-    return <p>Cargando histórico...</p>;
+  if (!jornada) return <p className="mt-6 text-gray-500">Selecciona una jornada.</p>;
+  if (!tabla.length) return <p className="mt-6 text-gray-500">No hay datos para esta jornada.</p>;
 
 
   // calcular totales

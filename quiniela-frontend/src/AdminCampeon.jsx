@@ -154,7 +154,7 @@ function AdminCampeon({ torneoId }) {
                 type="text"
                 value={equipoCampeon}
                 onChange={(e) => setEquipoCampeon(e.target.value)}
-                placeholder="Ej. América"
+                placeholder="Ej. Chivas"
                 className="border rounded-lg px-3 py-2 w-full md:w-80"
               />
             </div>

@@ -44,7 +44,9 @@ function App({ onLogout }) {
   // ── Torneos ──────────────────────────────────────────────────────────
   const cargarTorneos = async () => {
     try {
-      const res = await fetch(`${API}/torneos`);
+      const res = await fetch(`${API}/torneos/mis-torneos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
 
       if (!res.ok || !Array.isArray(data)) return;
@@ -80,10 +82,10 @@ function App({ onLogout }) {
   };
 
   const cargarJornadaActual = async () => {
-    if (!jornadaNumero) return null;
+    if (!jornadaNumero || !torneoId) return null;
 
     try {
-      const res = await fetch(`${API}/jornadas/${jornadaNumero}`);
+      const res = await fetch(`${API}/jornadas/${jornadaNumero}?torneo_id=${torneoId}`);
       const data = await res.json();
 
       if (!res.ok || !data?.id) {
@@ -281,6 +283,24 @@ function App({ onLogout }) {
   };
 
   // ── Render ────────────────────────────────────────────────────────────
+  if (torneos.length === 0 && torneoId === "") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-8">
+        <p className="text-5xl mb-4">⚽</p>
+        <h2 className="text-2xl font-bold mb-2">Sin acceso a torneos</h2>
+        <p className="text-gray-500 max-w-sm">
+          No tienes ningún torneo asignado. Contacta al administrador para que te inscriba en un torneo.
+        </p>
+        <button
+          onClick={onLogout}
+          className="mt-6 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">

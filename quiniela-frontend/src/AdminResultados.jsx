@@ -7,6 +7,7 @@ import AdminUsuarios from "./AdminUsuarios";
 import AdminCampeon from "./AdminCampeon";
 import HistoricoPronosticos from "./HistoricoPronosticos";
 import AdminPagos from "./AdminPagos";
+import AdminTorneos from "./AdminTorneos";
 import { API } from "./config/api";
 
 function AdminResultados({ onLogout }) {
@@ -63,7 +64,7 @@ function AdminResultados({ onLogout }) {
         if (!jornada) return;
 
         try {
-            const jornadaResponse = await fetch(`${API}/jornadas/${jornada}`);
+            const jornadaResponse = await fetch(`${API}/jornadas/${jornada}?torneo_id=${torneoId}`);
             const jornadaData = await jornadaResponse.json();
 
             if (!jornadaResponse.ok || !jornadaData?.id) {
@@ -179,6 +180,7 @@ function AdminResultados({ onLogout }) {
     };
 
     const tabs = [
+        { id: "torneos", label: "Torneos 🏆" },
         { id: "resultados", label: "Resultados" },
         { id: "jornadas", label: "Jornadas" },
         { id: "partidos", label: "Partidos" },
@@ -337,6 +339,10 @@ function AdminResultados({ onLogout }) {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {tab === "torneos" && (
+                <AdminTorneos onTorneoChange={cargarTorneos} />
             )}
 
             {tab === "jornadas" && (

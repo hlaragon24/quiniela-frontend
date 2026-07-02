@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
 
-function AdminPartidos({ torneoId }) {
+function AdminPartidos() {
+    const [torneos, setTorneos] = useState([]);
+    const [torneoSeleccionado, setTorneoSeleccionado] = useState("");
 
     const [partidos, setPartidos] = useState([]);
     const [jornadas, setJornadas] = useState([]);
@@ -11,18 +13,28 @@ function AdminPartidos({ torneoId }) {
     const [fecha, setFecha] = useState("");
     const [jornadaId, setJornadaId] = useState("");
     const [comodin, setComodin] = useState(false);
-
     const [editandoId, setEditandoId] = useState(null);
 
     const token = localStorage.getItem("token");
 
-    const cargarJornadas = async () => {
-        if (!torneoId) return;
-
+    const cargarTorneos = async () => {
         try {
-            const res = await fetch(`${API}/jornadas?torneo_id=${torneoId}`);
+            const res = await fetch(`${API}/torneos`);
             const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                setTorneos(data);
+                setTorneoSeleccionado(data[0].id);
+            }
+        } catch (error) {
+            console.error("Error cargando torneos:", error);
+        }
+    };
 
+    const cargarJornadas = async (tid) => {
+        if (!tid) return;
+        try {
+            const res = await fetch(`${API}/jornadas?torneo_id=${tid}`);
+            const data = await res.json();
             if (!res.ok || !Array.isArray(data)) return;
 
             const jornadasConId = await Promise.all(
@@ -38,7 +50,6 @@ function AdminPartidos({ torneoId }) {
             );
 
             setJornadas(jornadasConId);
-
             const activa = jornadasConId.find((j) => j.estado !== "cerrada");
             if (activa?.id) setJornadaId(activa.id);
         } catch (error) {
@@ -51,9 +62,7 @@ function AdminPartidos({ torneoId }) {
             const res = await fetch(`${API}/partidos`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             const data = await res.json();
-
             const lista = Array.isArray(data) ? data : [];
             lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
             setPartidos(lista);
@@ -63,13 +72,19 @@ function AdminPartidos({ torneoId }) {
     };
 
     useEffect(() => {
-        cargarJornadas();
+        cargarTorneos();
         cargarPartidos();
-    }, [torneoId]);
+    }, []);
+
+    useEffect(() => {
+        setJornadaId("");
+        setJornadas([]);
+        cargarJornadas(torneoSeleccionado);
+    }, [torneoSeleccionado]);
 
     const guardarPartido = async () => {
         if (!local || !visitante || !jornadaId) {
-            alert("Completa los campos");
+            alert("Completa los campos obligatorios");
             return;
         }
 
@@ -105,13 +120,11 @@ function AdminPartidos({ torneoId }) {
     };
 
     const eliminarPartido = async (id) => {
-        if (!confirm("Eliminar partido?")) return;
-
+        if (!confirm("¿Eliminar partido?")) return;
         await fetch(`${API}/partidos/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         });
-
         cargarPartidos();
     };
 
@@ -131,6 +144,23 @@ function AdminPartidos({ torneoId }) {
         <div>
             <h2 className="text-xl font-bold mb-4">Gestión de Partidos ⚽</h2>
 
+            {/* Selector de torneo */}
+            <div className="mb-4 flex items-center gap-3">
+                <label className="font-semibold text-sm">Torneo:</label>
+                <select
+                    value={torneoSeleccionado}
+                    onChange={(e) => setTorneoSeleccionado(Number(e.target.value))}
+                    className="px-3 py-2 rounded border border-gray-300 font-medium"
+                >
+                    {torneos.map((t) => (
+                        <option key={t.id} value={t.id}>
+                            {t.nombre} {t.temporada ? `(${t.temporada})` : ""}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Formulario */}
             <div className="flex flex-wrap gap-2.5 mb-5">
                 <input
                     placeholder="Equipo local"
@@ -205,7 +235,7 @@ function AdminPartidos({ torneoId }) {
             <h3 className="text-lg font-semibold mb-3">Partidos de la jornada</h3>
 
             {!jornadaId ? (
-                <p className="text-gray-500">Selecciona una jornada</p>
+                <p className="text-gray-500">Selecciona una jornada para ver sus partidos.</p>
             ) : (
                 <table className="w-full border-collapse">
                     <thead>
@@ -222,7 +252,7 @@ function AdminPartidos({ torneoId }) {
                         {partidosFiltrados.length === 0 ? (
                             <tr>
                                 <td colSpan="5" className="p-3 text-gray-500">
-                                    Sin partidos registrados
+                                    Sin partidos registrados en esta jornada.
                                 </td>
                             </tr>
                         ) : (

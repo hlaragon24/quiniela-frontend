@@ -3,8 +3,13 @@ import { API } from "./config/api";
 
 function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
+  const [torneos, setTorneos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [creando, setCreando] = useState(false);
+  const [expandido, setExpandido] = useState(null); // usuario_id expandido
+  const [torneosUsuario, setTorneosUsuario] = useState({}); // { usuario_id: [torneos] }
+  const [torneoParaAgregar, setTorneoParaAgregar] = useState({});
+  const [mensajeTorneos, setMensajeTorneos] = useState({});
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -16,20 +21,11 @@ function AdminUsuarios() {
   const cargarUsuarios = async () => {
     try {
       setLoading(true);
-
       const response = await fetch(`${API}/usuarios`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.mensaje || "Error cargando usuarios");
-        return;
-      }
-
+      if (!response.ok) { alert(data.mensaje || "Error cargando usuarios"); return; }
       setUsuarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
@@ -39,54 +35,112 @@ function AdminUsuarios() {
     }
   };
 
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
-
-  const limpiarFormulario = () => {
-    setNombre("");
-    setEmail("");
-    setPassword("");
-    setRol("jugador");
+  const cargarTorneos = async () => {
+    try {
+      const res = await fetch(`${API}/torneos`);
+      const data = await res.json();
+      if (Array.isArray(data)) setTorneos(data);
+    } catch (error) {
+      console.error("Error cargando torneos:", error);
+    }
   };
 
-  const crearUsuario = async () => {
-    if (!nombre.trim() || !email.trim() || !password.trim() || !rol) {
-      alert("Completa todos los campos");
+  useEffect(() => {
+    cargarUsuarios();
+    cargarTorneos();
+  }, []);
+
+  // ── Torneos por usuario ───────────────────────────────────────────────
+  const cargarTorneosUsuario = async (usuarioId) => {
+    try {
+      const res = await fetch(`${API}/usuarios/${usuarioId}/torneos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setTorneosUsuario((prev) => ({
+        ...prev,
+        [usuarioId]: Array.isArray(data) ? data : [],
+      }));
+    } catch (error) {
+      console.error("Error cargando torneos del usuario:", error);
+    }
+  };
+
+  const toggleExpandido = async (usuarioId) => {
+    if (expandido === usuarioId) {
+      setExpandido(null);
       return;
     }
+    setExpandido(usuarioId);
+    await cargarTorneosUsuario(usuarioId);
+    setTorneoParaAgregar((prev) => ({ ...prev, [usuarioId]: "" }));
+  };
 
-    if (password.length < 6) {
-      alert("La contraseña debe tener al menos 6 caracteres");
+  const agregarTorneoAUsuario = async (usuarioId) => {
+    const tid = torneoParaAgregar[usuarioId];
+    if (!tid) {
+      setMensajeTorneos((prev) => ({ ...prev, [usuarioId]: "⚠ Selecciona un torneo" }));
       return;
     }
 
     try {
-      setCreando(true);
+      const res = await fetch(`${API}/usuarios/${usuarioId}/torneos/${tid}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensajeTorneos((prev) => ({
+        ...prev,
+        [usuarioId]: res.ok ? `✅ ${data.mensaje || "Torneo asignado"}` : `❌ ${data.mensaje || "Error"}`,
+      }));
+      if (res.ok) await cargarTorneosUsuario(usuarioId);
+    } catch (error) {
+      console.error(error);
+      setMensajeTorneos((prev) => ({ ...prev, [usuarioId]: "❌ Error de conexión" }));
+    }
+  };
 
+  const quitarTorneoDeUsuario = async (usuarioId, torneoId) => {
+    if (!window.confirm("¿Quitar al usuario de este torneo?")) return;
+
+    try {
+      const res = await fetch(`${API}/usuarios/${usuarioId}/torneos/${torneoId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensajeTorneos((prev) => ({
+        ...prev,
+        [usuarioId]: res.ok ? `✅ ${data.mensaje || "Torneo removido"}` : `❌ ${data.mensaje || "Error"}`,
+      }));
+      if (res.ok) await cargarTorneosUsuario(usuarioId);
+    } catch (error) {
+      console.error(error);
+      setMensajeTorneos((prev) => ({ ...prev, [usuarioId]: "❌ Error de conexión" }));
+    }
+  };
+
+  // ── CRUD usuarios ─────────────────────────────────────────────────────
+  const limpiarFormulario = () => {
+    setNombre(""); setEmail(""); setPassword(""); setRol("jugador");
+  };
+
+  const crearUsuario = async () => {
+    if (!nombre.trim() || !email.trim() || !password.trim() || !rol) {
+      alert("Completa todos los campos"); return;
+    }
+    if (password.length < 6) { alert("La contraseña debe tener al menos 6 caracteres"); return; }
+
+    try {
+      setCreando(true);
       const response = await fetch(`${API}/usuarios`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          nombre: nombre.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-          rol
-        })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nombre: nombre.trim(), email: email.trim().toLowerCase(), password, rol }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.mensaje || "Error creando usuario");
-        return;
-      }
-
+      if (!response.ok) { alert(data.mensaje || "Error creando usuario"); return; }
       alert(data.mensaje || "Usuario creado correctamente");
-
       limpiarFormulario();
       await cargarUsuarios();
     } catch (error) {
@@ -99,352 +153,193 @@ function AdminUsuarios() {
 
   const cambiarRol = async (id, rolActual) => {
     const nuevoRol = rolActual === "admin" ? "jugador" : "admin";
-
     if (!window.confirm(`¿Cambiar rol a ${nuevoRol}?`)) return;
-
     try {
       const response = await fetch(`${API}/usuarios/${id}/rol`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rol: nuevoRol
-        })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ rol: nuevoRol }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.mensaje || "Error actualizando rol");
-        return;
-      }
-
+      if (!response.ok) { alert(data.mensaje || "Error actualizando rol"); return; }
       await cargarUsuarios();
-    } catch (error) {
-      console.error(error);
-      alert("Error de conexión");
-    }
+    } catch (error) { console.error(error); alert("Error de conexión"); }
   };
 
   const cambiarEstado = async (id, activoActual) => {
     const accion = activoActual ? "desactivar" : "activar";
-
-    if (!window.confirm(`¿Seguro que quieres ${accion} este usuario?`)) {
-      return;
-    }
-
+    if (!window.confirm(`¿Seguro que quieres ${accion} este usuario?`)) return;
     try {
       const response = await fetch(`${API}/usuarios/${id}/estado`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          activo: !activoActual
-        })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ activo: !activoActual }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.mensaje || "Error actualizando estado");
-        return;
-      }
-
+      if (!response.ok) { alert(data.mensaje || "Error actualizando estado"); return; }
       await cargarUsuarios();
-    } catch (error) {
-      console.error(error);
-      alert("Error de conexión");
-    }
+    } catch (error) { console.error(error); alert("Error de conexión"); }
   };
 
   const resetearPassword = async (id) => {
     const nuevaPassword = prompt("Nueva contraseña:");
-
     if (!nuevaPassword) return;
-
-    if (nuevaPassword.length < 6) {
-      alert("La contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-
+    if (nuevaPassword.length < 6) { alert("La contraseña debe tener al menos 6 caracteres"); return; }
     try {
       const response = await fetch(`${API}/usuarios/${id}/password`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          password: nuevaPassword
-        })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ password: nuevaPassword }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.mensaje || "Error actualizando contraseña");
-        return;
-      }
-
+      if (!response.ok) { alert(data.mensaje || "Error actualizando contraseña"); return; }
       alert("Contraseña actualizada");
-    } catch (error) {
-      console.error(error);
-      alert("Error de conexión");
-    }
+    } catch (error) { console.error(error); alert("Error de conexión"); }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div>
-      <h2>Administración de Usuarios 👥</h2>
+      <h2 className="text-xl font-bold mb-4">Administración de Usuarios 👥</h2>
 
-      <div style={formContainer}>
-        <h3 style={{ marginBottom: "10px" }}>Crear nuevo usuario</h3>
-
-        <div style={formGrid}>
-          <input
-            placeholder="Nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            style={inputStyle}
-          />
-
-          <input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-          />
-
-          <input
-            placeholder="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={inputStyle}
-          />
-
-          <select
-            value={rol}
-            onChange={(e) => setRol(e.target.value)}
-            style={inputStyle}
-          >
+      {/* Formulario crear usuario */}
+      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+        <h3 className="font-semibold mb-3">Crear nuevo usuario</h3>
+        <div className="flex flex-wrap gap-2.5 items-center">
+          <input placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} className="p-2 border border-gray-300 rounded" />
+          <input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-2 border border-gray-300 rounded" />
+          <input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="p-2 border border-gray-300 rounded" />
+          <select value={rol} onChange={(e) => setRol(e.target.value)} className="p-2 border border-gray-300 rounded">
             <option value="jugador">Jugador</option>
             <option value="admin">Admin</option>
           </select>
-
-          <button
-            onClick={crearUsuario}
-            disabled={creando}
-            style={{
-              ...botonCrear,
-              opacity: creando ? 0.6 : 1,
-              cursor: creando ? "not-allowed" : "pointer"
-            }}
-          >
+          <button onClick={crearUsuario} disabled={creando} className={`bg-green-600 text-white px-3 py-2 rounded font-semibold hover:bg-green-700 ${creando ? "opacity-60 cursor-not-allowed" : ""}`}>
             {creando ? "Creando..." : "➕ Crear usuario"}
           </button>
-
-          <button
-            onClick={limpiarFormulario}
-            style={botonGris}
-          >
-            Limpiar
-          </button>
+          <button onClick={limpiarFormulario} className="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
         </div>
       </div>
 
+      {/* Tabla usuarios */}
       {loading ? (
-        <p>Cargando usuarios...</p>
+        <p className="text-gray-500">Cargando usuarios...</p>
       ) : (
-        <table style={tabla}>
-          <thead>
-            <tr style={thead}>
-              <th style={thtd}>ID</th>
-              <th style={thtd}>Nombre</th>
-              <th style={thtd}>Email</th>
-              <th style={thtd}>Rol</th>
-              <th style={thtd}>Estado</th>
-              <th style={thtd}>Acciones</th>
-            </tr>
-          </thead>
+        <div className="space-y-2">
+          {/* Cabecera */}
+          <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-100 rounded font-semibold text-sm">
+            <div className="col-span-1 text-center">ID</div>
+            <div className="col-span-2">Nombre</div>
+            <div className="col-span-3">Email</div>
+            <div className="col-span-1 text-center">Rol</div>
+            <div className="col-span-1 text-center">Estado</div>
+            <div className="col-span-4">Acciones</div>
+          </div>
 
-          <tbody>
-            {usuarios.map((u) => (
-              <tr key={u.id} style={fila}>
-                <td style={thtd}>{u.id}</td>
+          {usuarios.map((u) => (
+            <div key={u.id} className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Fila principal */}
+              <div className="grid grid-cols-12 gap-2 px-3 py-2.5 items-center text-sm">
+                <div className="col-span-1 text-center text-gray-500">{u.id}</div>
 
-                <td style={thtd}>{u.nombre}</td>
+                <div className="col-span-2 font-semibold">{u.nombre}</div>
 
-                <td style={thtd}>{u.email}</td>
+                <div className="col-span-3 text-gray-600 truncate">{u.email}</div>
 
-                <td style={thtd}>
-                  <span
-                    style={{
-                      background: u.rol === "admin" ? "#dc2626" : "#2563eb",
-                      color: "white",
-                      padding: "4px 10px",
-                      borderRadius: "8px",
-                      fontSize: "12px"
-                    }}
-                  >
+                <div className="col-span-1 text-center">
+                  <span className={`px-2 py-0.5 rounded text-xs text-white font-semibold ${u.rol === "admin" ? "bg-red-600" : "bg-blue-600"}`}>
                     {u.rol}
                   </span>
-                </td>
+                </div>
 
-                <td style={thtd}>
-                  <span
-                    style={{
-                      background: u.activo ? "#16a34a" : "#6b7280",
-                      color: "white",
-                      padding: "4px 10px",
-                      borderRadius: "8px",
-                      fontSize: "12px"
-                    }}
-                  >
+                <div className="col-span-1 text-center">
+                  <span className={`px-2 py-0.5 rounded text-xs text-white font-semibold ${u.activo ? "bg-green-600" : "bg-gray-500"}`}>
                     {u.activo ? "Activo" : "Inactivo"}
                   </span>
-                </td>
+                </div>
 
-                <td style={thtd}>
-                  <button
-                    onClick={() => cambiarRol(u.id, u.rol)}
-                    style={botonAzul}
-                  >
-                    Cambiar rol
-                  </button>
-
-                  <button
-                    onClick={() => cambiarEstado(u.id, u.activo)}
-                    style={u.activo ? botonRojo : botonVerde}
-                  >
+                <div className="col-span-4 flex flex-wrap gap-1">
+                  <button onClick={() => cambiarRol(u.id, u.rol)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Cambiar rol</button>
+                  <button onClick={() => cambiarEstado(u.id, u.activo)} className={`${u.activo ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"} text-white px-2 py-1 rounded text-xs`}>
                     {u.activo ? "Desactivar" : "Activar"}
                   </button>
-
+                  <button onClick={() => resetearPassword(u.id)} className="bg-orange-600 text-white px-2 py-1 rounded text-xs hover:bg-orange-700">Reset pwd</button>
                   <button
-                    onClick={() => resetearPassword(u.id)}
-                    style={botonNaranja}
+                    onClick={() => toggleExpandido(u.id)}
+                    className={`px-2 py-1 rounded text-xs font-semibold border ${expandido === u.id ? "bg-purple-600 text-white border-purple-600" : "border-purple-400 text-purple-600 hover:bg-purple-50"}`}
                   >
-                    Reset password
+                    🏆 Torneos {expandido === u.id ? "▲" : "▼"}
                   </button>
-                </td>
-              </tr>
-            ))}
+                </div>
+              </div>
 
-            {usuarios.length === 0 && (
-              <tr>
-                <td style={thtd} colSpan="6">
-                  No hay usuarios registrados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              {/* Panel de torneos expandible */}
+              {expandido === u.id && (
+                <div className="border-t border-gray-200 bg-purple-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-purple-800 mb-3">Torneos asignados a {u.nombre}</p>
+
+                  {/* Torneos actuales */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {(torneosUsuario[u.id] || []).length === 0 ? (
+                      <p className="text-sm text-gray-500">Sin torneos asignados.</p>
+                    ) : (
+                      (torneosUsuario[u.id] || []).map((t) => (
+                        <div key={t.id} className="flex items-center gap-1.5 bg-white border border-purple-200 rounded-full px-3 py-1 text-sm">
+                          <span className="font-medium">{t.nombre}</span>
+                          {t.temporada && <span className="text-gray-400">({t.temporada})</span>}
+                          <button
+                            onClick={() => quitarTorneoDeUsuario(u.id, t.id)}
+                            className="text-red-500 hover:text-red-700 font-bold ml-1 leading-none"
+                            title="Quitar torneo"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Agregar torneo */}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={torneoParaAgregar[u.id] || ""}
+                      onChange={(e) =>
+                        setTorneoParaAgregar((prev) => ({ ...prev, [u.id]: e.target.value }))
+                      }
+                      className="p-1.5 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="">Seleccionar torneo...</option>
+                      {torneos
+                        .filter((t) => !(torneosUsuario[u.id] || []).some((tu) => tu.id === t.id))
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.nombre} {t.temporada ? `(${t.temporada})` : ""}
+                          </option>
+                        ))}
+                    </select>
+
+                    <button
+                      onClick={() => agregarTorneoAUsuario(u.id)}
+                      className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700 font-semibold"
+                    >
+                      Asignar
+                    </button>
+                  </div>
+
+                  {mensajeTorneos[u.id] && (
+                    <p className="mt-2 text-sm text-gray-700">{mensajeTorneos[u.id]}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {usuarios.length === 0 && (
+            <p className="text-gray-500 text-sm p-3">No hay usuarios registrados.</p>
+          )}
+        </div>
       )}
     </div>
   );
 }
-
-const formContainer = {
-  marginBottom: "25px",
-  padding: "15px",
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  background: "#f9fafb"
-};
-
-const formGrid = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "10px",
-  alignItems: "center"
-};
-
-const inputStyle = {
-  padding: "8px",
-  border: "1px solid #ccc",
-  borderRadius: "6px"
-};
-
-const tabla = {
-  width: "100%",
-  borderCollapse: "collapse"
-};
-
-const thead = {
-  background: "#f3f4f6"
-};
-
-const fila = {
-  borderBottom: "1px solid #eee"
-};
-
-const thtd = {
-  padding: "10px",
-  border: "1px solid #ddd",
-  textAlign: "left"
-};
-
-const botonCrear = {
-  background: "#16a34a",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "600"
-};
-
-const botonAzul = {
-  background: "#2563eb",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "6px"
-};
-
-const botonRojo = {
-  background: "#dc2626",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "6px"
-};
-
-const botonVerde = {
-  background: "#16a34a",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "6px"
-};
-
-const botonNaranja = {
-  background: "#ea580c",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer"
-};
-
-const botonGris = {
-  background: "#6b7280",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer"
-};
 
 export default AdminUsuarios;

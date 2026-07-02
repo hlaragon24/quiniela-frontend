@@ -53,8 +53,8 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
 
     const token = localStorage.getItem("token");
 
-    const cargarDashboard = async () => {
-        if (!torneoId) return;
+    const cargarDashboard = async (tid) => {
+        if (!tid) return;
 
         try {
             setCargando(true);
@@ -66,15 +66,15 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                 resConfigCampeon,
                 resMiPago,
             ] = await Promise.all([
-                fetch(`${API}/ranking/mi-resumen?torneo_id=${torneoId}`, {
+                fetch(`${API}/ranking/mi-resumen?torneo_id=${tid}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch(`${API}/ranking/torneo/${torneoId}`),
-                fetch(`${API}/campeon/mi-pronostico?torneo_id=${torneoId}`, {
+                fetch(`${API}/ranking/torneo/${tid}`),
+                fetch(`${API}/campeon/mi-pronostico?torneo_id=${tid}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch(`${API}/campeon/config?torneo_id=${torneoId}`),
-                fetch(`${API}/pagos/mi-pago?torneo_id=${torneoId}`, {
+                fetch(`${API}/campeon/config?torneo_id=${tid}`),
+                fetch(`${API}/pagos/mi-pago?torneo_id=${tid}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
@@ -150,7 +150,7 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
             }
 
             setMensajeCampeon(`✅ ${data.mensaje}`);
-            await cargarDashboard();
+            await cargarDashboard(torneoId);
         } catch (error) {
             console.error("Error guardando campeón:", error);
             setMensajeCampeon("❌ Error de conexión con el servidor");
@@ -160,7 +160,15 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
     };
 
     useEffect(() => {
-        cargarDashboard();
+        if (!torneoId) return;
+        setResumen(null);
+        setRanking([]);
+        setMiCampeon(null);
+        setConfigCampeon(null);
+        setMiPago(null);
+        setMensajeCampeon("");
+        setCargando(true);
+        cargarDashboard(torneoId);
     }, [torneoId]);
 
     const totalPartidos = partidos.length;
@@ -362,7 +370,7 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                                 type="text"
                                 value={campeonInput}
                                 onChange={(e) => setCampeonInput(e.target.value)}
-                                placeholder="Ej. América"
+                                placeholder="Ej. Chivas"
                                 disabled={campeonBloqueado}
                                 className={`w-full border rounded-lg px-3 py-2 ${campeonBloqueado ? "bg-gray-100 cursor-not-allowed" : ""}`}
                             />
