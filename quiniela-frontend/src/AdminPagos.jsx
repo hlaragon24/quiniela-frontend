@@ -29,9 +29,9 @@ function AdminPagos({ torneoId }) {
       .catch(console.error);
   }, [torneoId]);
 
-  /* ─── 2. si tipo='jornada', cargar jornadas del torneo ─── */
+  /* ─── 2. cargar jornadas del torneo (cualquier tipo) ─── */
   useEffect(() => {
-    if (!torneoInfo || torneoInfo.tipo !== "jornada") return;
+    if (!torneoInfo) return;
     setCargandoJornadas(true);
 
     fetch(`${API}/jornadas?torneo_id=${torneoId}`)
@@ -41,7 +41,9 @@ function AdminPagos({ torneoId }) {
           .filter((j) => j.torneo_id == torneoId)
           .sort((a, b) => a.numero - b.numero);
         setJornadas(lista);
-        if (lista.length > 0) setJornadaId(lista[0].id);
+        // tipo='jornada': auto-seleccionar primera (requerido)
+        // tipo='temporada': iniciar sin jornada → muestra pagos generales del torneo
+        if (torneoInfo.tipo === "jornada" && lista.length > 0) setJornadaId(lista[0].id);
       })
       .catch(console.error)
       .finally(() => setCargandoJornadas(false));
@@ -55,10 +57,9 @@ function AdminPagos({ torneoId }) {
     setCargando(true);
     setMensaje("");
 
-    const url =
-      torneoInfo.tipo === "jornada"
-        ? `${API}/pagos?torneo_id=${torneoId}&jornada_id=${jornadaId}`
-        : `${API}/pagos?torneo_id=${torneoId}`;
+    const url = jornadaId
+      ? `${API}/pagos?torneo_id=${torneoId}&jornada_id=${jornadaId}`
+      : `${API}/pagos?torneo_id=${torneoId}`;
 
     try {
       const res  = await fetch(url, { headers });
@@ -103,7 +104,7 @@ function AdminPagos({ torneoId }) {
       metodo_pago: datos.metodo_pago || null,
       notas:       datos.notas       || null,
       torneo_id:   torneoId,
-      ...(torneoInfo?.tipo === "jornada" && { jornada_id: jornadaId }),
+      ...(jornadaId && { jornada_id: jornadaId }),
     };
 
     try {
@@ -168,44 +169,56 @@ function AdminPagos({ torneoId }) {
         Mientras esté <strong>Pendiente ❌</strong>, el sistema le bloqueará al intentar enviar.
       </div>
 
-      {/* Selector de jornada (solo tipo='jornada') */}
-      {torneoInfo.tipo === "jornada" && (
-        <div className="mb-5">
-          {cargandoJornadas ? (
-            <p className="text-sm text-gray-500">Cargando jornadas...</p>
-          ) : jornadas.length === 0 ? (
-            <p className="text-sm text-gray-500">Sin jornadas en este torneo.</p>
-          ) : (
-            <>
-              <p className="text-sm font-medium text-gray-600 mb-2">Selecciona la jornada:</p>
-              <div className="flex flex-wrap gap-2">
-                {jornadas.map((j) => (
-                  <button
-                    key={j.id}
-                    onClick={() => { setJornadaId(j.id); setFiltro("todos"); }}
-                    className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-                      jornadaId === j.id
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
-                    }`}
-                  >
-                    J{j.numero}
-                    {j.estado === "finalizada" && " ✓"}
-                  </button>
-                ))}
-              </div>
-              {jornadaActual && (
-                <p className="text-xs text-gray-400 mt-2">
-                  Jornada {jornadaActual.numero} · estado: <strong>{jornadaActual.estado}</strong>
-                  {jornadaActual.fecha_cierre && (
-                    <> · cierre: {new Date(jornadaActual.fecha_cierre).toLocaleDateString()}</>
-                  )}
-                </p>
+      {/* Selector de jornada (todos los tipos) */}
+      <div className="mb-5">
+        {cargandoJornadas ? (
+          <p className="text-sm text-gray-500">Cargando jornadas...</p>
+        ) : jornadas.length === 0 ? (
+          <p className="text-sm text-gray-500">Sin jornadas en este torneo.</p>
+        ) : (
+          <>
+            <p className="text-sm font-medium text-gray-600 mb-2">
+              {torneoInfo.tipo === "temporada" ? "Ver pagos por:" : "Selecciona la jornada:"}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {torneoInfo.tipo === "temporada" && (
+                <button
+                  onClick={() => { setJornadaId(null); setFiltro("todos"); }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                    jornadaId === null
+                      ? "bg-gray-700 text-white border-gray-700"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  Temporada general
+                </button>
               )}
-            </>
-          )}
-        </div>
-      )}
+              {jornadas.map((j) => (
+                <button
+                  key={j.id}
+                  onClick={() => { setJornadaId(j.id); setFiltro("todos"); }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                    jornadaId === j.id
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                  }`}
+                >
+                  J{j.numero}
+                  {j.estado === "finalizada" && " ✓"}
+                </button>
+              ))}
+            </div>
+            {jornadaActual && (
+              <p className="text-xs text-gray-400 mt-2">
+                Jornada {jornadaActual.numero} · estado: <strong>{jornadaActual.estado}</strong>
+                {jornadaActual.fecha_cierre && (
+                  <> · cierre: {new Date(jornadaActual.fecha_cierre).toLocaleDateString()}</>
+                )}
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {cargando ? (
         <p className="text-gray-500">Cargando pagos...</p>
@@ -287,7 +300,7 @@ function AdminPagos({ torneoId }) {
                 <tr className="bg-gray-100">
                   <th className="text-left p-3 border-b-2 border-gray-300">Jugador</th>
                   <th className="text-left p-3 border-b-2 border-gray-300">
-                    {torneoInfo.tipo === "jornada" ? "Jornada" : "Torneo"}
+                    {jornadaId ? `J${jornadaActual?.numero ?? ""}` : "Torneo"}
                   </th>
                   <th className="text-center p-3 border-b-2 border-gray-300">Monto</th>
                   <th className="text-center p-3 border-b-2 border-gray-300">Estado</th>
@@ -318,10 +331,8 @@ function AdminPagos({ torneoId }) {
                           <div className="text-xs text-gray-400">{pago.email}</div>
                         </td>
                         <td className="p-2.5 border-b border-gray-200 text-sm text-gray-600">
-                          {torneoInfo.tipo === "jornada" ? (
-                            <span className="font-medium">
-                              J{jornadaActual?.numero ?? "—"}
-                            </span>
+                          {jornadaId ? (
+                            <span className="font-medium">J{jornadaActual?.numero ?? "—"}</span>
                           ) : (
                             <span>{torneoInfo.nombre}</span>
                           )}

@@ -78,7 +78,12 @@ function App({ onLogout }) {
         setMiPagoTemporada(null);
       } else {
         setMiPagoTemporada(data);
-        setMisPagosJornada({});
+        // Mapear pagos por jornada dentro de la temporada (si existen)
+        const mapa = {};
+        if (Array.isArray(data?.pagos_jornada)) {
+          data.pagos_jornada.forEach((p) => { mapa[p.jornada_id] = Boolean(p.pagado); });
+        }
+        setMisPagosJornada(mapa);
       }
     } catch (e) {
       console.error("Error cargando mi pago:", e);
@@ -382,7 +387,7 @@ function App({ onLogout }) {
             className="border rounded px-2 py-1"
           >
             {listaJornadas.map((j) => {
-              const bloqueada = torneoTipo === "jornada" && misPagosJornada[j.id] === false;
+              const bloqueada = misPagosJornada[j.id] === false;
               return (
                 <option key={`jornada-${j.id}`} value={j.numero}>
                   {bloqueada ? "🔒 " : ""}Jornada {j.numero}
@@ -427,8 +432,8 @@ function App({ onLogout }) {
             </div>
           )}
 
-          {/* Banner pago pendiente — jornada */}
-          {torneoTipo === "jornada" && jornadaId && misPagosJornada[jornadaId] === false && (
+          {/* Banner pago pendiente — jornada (aplica cualquier tipo de torneo) */}
+          {jornadaId && misPagosJornada[jornadaId] === false && (
             <div className="mt-4 mb-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300">
               <p className="font-semibold text-yellow-700">💳 Pago pendiente para esta jornada</p>
               <p className="text-sm text-yellow-600 mt-1">
