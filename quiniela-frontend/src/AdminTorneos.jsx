@@ -220,28 +220,31 @@ function AdminTorneos({ onTorneoChange }) {
                     <span>Fin: {new Date(t.fecha_fin).toLocaleDateString("es-MX")}</span>
                   )}
 
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-semibold text-white ${
-                      t.estado === "cerrado" || t.activo === false
-                        ? "bg-red-500"
-                        : "bg-green-600"
-                    }`}
-                  >
-                    {t.estado || (t.activo ? "abierto" : "cerrado")}
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold text-white ${
+                    t.estado === "finalizado" ? "bg-gray-500" : "bg-green-600"
+                  }`}>
+                    {t.estado || "abierto"}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold text-white ${
+                    t.activo ? "bg-blue-500" : "bg-red-400"
+                  }`}>
+                    {t.activo ? "⚡ Activo" : "Inactivo"}
                   </span>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                {!t.activo && (
-                  <button
-                    onClick={() => activarTorneo(t.id)}
-                    className="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-yellow-600 font-semibold"
-                    title="Establecer como torneo activo por defecto"
-                  >
-                    ⚡ Activar
-                  </button>
-                )}
+                <button
+                  onClick={() => activarTorneo(t.id)}
+                  className={`px-3 py-1.5 rounded font-semibold text-white ${
+                    t.activo
+                      ? "bg-gray-500 hover:bg-gray-600"
+                      : "bg-yellow-500 hover:bg-yellow-600"
+                  }`}
+                  title={t.activo ? "Desactivar torneo" : "Activar torneo"}
+                >
+                  {t.activo ? "⏸ Desactivar" : "⚡ Activar"}
+                </button>
 
                 <button
                   onClick={() => editarTorneo(t)}
