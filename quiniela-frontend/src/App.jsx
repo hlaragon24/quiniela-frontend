@@ -341,9 +341,9 @@ function App({ onLogout }) {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">
+    <div className="p-3 sm:p-5 md:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4 md:mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">
           Pronósticos Quiniela ⚽
         </h1>
 
@@ -363,7 +363,7 @@ function App({ onLogout }) {
         </button>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-4 items-center">
+      <div className="mb-4 flex flex-wrap gap-3 items-center">
         {torneos.length > 1 && (
           <div>
             <label className="mr-2 font-semibold">Torneo:</label>
@@ -401,17 +401,37 @@ function App({ onLogout }) {
       </div>
 
       <Tabs defaultValue="inicio">
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="inicio">🏠 Inicio</TabsTrigger>
-          <TabsTrigger value="pronosticos">📊 Pronósticos</TabsTrigger>
-          <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
-          <TabsTrigger value="historial">📈 Historial</TabsTrigger>
-          <TabsTrigger value="misResultados">📋 Mis resultados</TabsTrigger>
-          <TabsTrigger value="historico-general">📊 Histórico general</TabsTrigger>
-          <TabsTrigger value="tabla-general">🏆 Tabla General</TabsTrigger>
-          <TabsTrigger value="perfil">👤 Mi Perfil</TabsTrigger>
-          <TabsTrigger value="historico-pronosticos">📚 Histórico pronósticos</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-1 -mx-3 px-3 sm:-mx-5 sm:px-5 md:mx-0 md:px-0">
+          <TabsList className="flex flex-nowrap h-auto w-max gap-0.5">
+            <TabsTrigger value="inicio" className="text-xs sm:text-sm px-2 sm:px-3">
+              🏠 <span className="hidden xs:inline">Inicio</span><span className="xs:hidden">Inicio</span>
+            </TabsTrigger>
+            <TabsTrigger value="pronosticos" className="text-xs sm:text-sm px-2 sm:px-3">
+              📊 <span className="hidden sm:inline">Pronósticos</span><span className="sm:hidden">Pronóst.</span>
+            </TabsTrigger>
+            <TabsTrigger value="ranking" className="text-xs sm:text-sm px-2 sm:px-3">
+              🏆 Ranking
+            </TabsTrigger>
+            <TabsTrigger value="historial" className="text-xs sm:text-sm px-2 sm:px-3">
+              📈 Historial
+            </TabsTrigger>
+            <TabsTrigger value="misResultados" className="text-xs sm:text-sm px-2 sm:px-3">
+              📋 <span className="hidden sm:inline">Mis resultados</span><span className="sm:hidden">Resultados</span>
+            </TabsTrigger>
+            <TabsTrigger value="historico-general" className="text-xs sm:text-sm px-2 sm:px-3">
+              📊 <span className="hidden sm:inline">Histórico general</span><span className="sm:hidden">Histórico</span>
+            </TabsTrigger>
+            <TabsTrigger value="tabla-general" className="text-xs sm:text-sm px-2 sm:px-3">
+              🏆 <span className="hidden sm:inline">Tabla General</span><span className="sm:hidden">Tabla</span>
+            </TabsTrigger>
+            <TabsTrigger value="perfil" className="text-xs sm:text-sm px-2 sm:px-3">
+              👤 <span className="hidden sm:inline">Mi Perfil</span><span className="sm:hidden">Perfil</span>
+            </TabsTrigger>
+            <TabsTrigger value="historico-pronosticos" className="text-xs sm:text-sm px-2 sm:px-3">
+              📚 <span className="hidden sm:inline">Histórico pronósticos</span><span className="sm:hidden">Mis pronóst.</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="inicio">
           <Dashboard
