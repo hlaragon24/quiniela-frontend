@@ -324,10 +324,10 @@ function App({ onLogout }) {
 
   if (torneos.length === 0 && torneoId === "") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-8 bg-[#0a1628]">
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-8 bg-[#eef3fb]">
         <img src="/logo.png" alt="Los Tercos" className="h-24 w-auto mb-6 object-contain" />
-        <h2 className="text-2xl font-bold mb-2 text-white">Sin acceso a torneos</h2>
-        <p className="text-gray-400 max-w-sm text-sm">
+        <h2 className="text-2xl font-bold mb-2 text-gray-900">Sin acceso a torneos</h2>
+        <p className="text-gray-500 max-w-sm text-sm">
           No tienes ningún torneo asignado. Contacta al administrador para que te inscriba.
         </p>
         <button
@@ -341,10 +341,10 @@ function App({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1628] text-white">
+    <div className="min-h-screen bg-[#eef3fb] text-gray-900">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-40 bg-[#0d1f3c] border-b border-[#1e3558] shadow-xl">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 py-2 flex items-center gap-3">
           <img src="/logo.png" alt="Los Tercos" className="h-10 w-auto object-contain flex-shrink-0" />
           <div className="flex-1" />
@@ -365,15 +365,15 @@ function App({ onLogout }) {
       </header>
 
       {/* ── TORNEO / JORNADA ── */}
-      <div className="bg-[#0d1f3c]/60 border-b border-[#1e3558] px-3 sm:px-5 py-2">
+      <div className="bg-gray-50 border-b border-gray-200 px-3 sm:px-5 py-2">
         <div className="max-w-5xl mx-auto flex flex-wrap gap-3 items-center">
           {torneos.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-green-400 font-bold uppercase tracking-widest">Torneo</span>
+              <span className="text-[10px] text-green-600 font-bold uppercase tracking-widest">Torneo</span>
               <select
                 value={torneoId}
                 onChange={(e) => setTorneoId(Number(e.target.value))}
-                className="bg-[#0f2240] border border-[#1e3558] text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 cursor-pointer"
+                className="bg-white border border-gray-200 text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 cursor-pointer shadow-sm"
               >
                 {torneos.map((t) => (
                   <option key={t.id} value={t.id}>{t.nombre}</option>
@@ -382,11 +382,11 @@ function App({ onLogout }) {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-green-400 font-bold uppercase tracking-widest">Jornada</span>
+            <span className="text-[10px] text-green-600 font-bold uppercase tracking-widest">Jornada</span>
             <select
               value={jornadaNumero}
               onChange={(e) => setJornadaNumero(e.target.value)}
-              className="bg-[#0f2240] border border-[#1e3558] text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 cursor-pointer"
+              className="bg-white border border-gray-200 text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-500 cursor-pointer shadow-sm"
             >
               {listaJornadas.map((j) => {
                 const bloqueada = misPagosJornada[j.id] === false;
@@ -402,7 +402,7 @@ function App({ onLogout }) {
       </div>
 
       {/* ── NAV PILLS ── */}
-      <div className="sticky top-[57px] z-30 bg-[#0a1628]/95 backdrop-blur-sm border-b border-[#1e3558]">
+      <div className="sticky top-[57px] z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-5xl mx-auto overflow-x-auto scrollbar-hide">
           <div className="flex flex-nowrap gap-1 px-3 sm:px-5 py-2 w-max">
             {NAV_ITEMS.map((item) => (
@@ -411,8 +411,8 @@ function App({ onLogout }) {
                 onClick={() => setActiveTab(item.value)}
                 className={`flex-shrink-0 flex items-center gap-1.5 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition-all active:scale-95
                   ${activeTab === item.value
-                    ? "bg-green-600 text-white shadow-lg shadow-green-900/50"
-                    : "text-gray-400 hover:text-white hover:bg-[#1e3558]"
+                    ? "bg-green-600 text-white shadow-lg shadow-green-300/50"
+                    : "text-gray-500 hover:text-gray-900 hover:bg-blue-50"
                   }`}
               >
                 <span>{item.icon}</span>
@@ -495,8 +495,8 @@ function App({ onLogout }) {
                 return (
                   <div
                     key={`partido-${partido.id}`}
-                    className={`bg-[#0f2240] rounded-2xl p-4 border shadow-lg transition-all ${
-                      incompleto ? "border-red-500 shadow-red-900/30" : "border-[#1e3558]"
+                    className={`bg-white rounded-2xl p-4 border shadow-md transition-all ${
+                      incompleto ? "border-red-400 shadow-red-200/50" : "border-gray-100"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -531,7 +531,7 @@ function App({ onLogout }) {
                         disabled={!jornadaAbierta}
                         value={marcadoresUsuario[partido.id]?.local ?? ""}
                         onChange={(e) => actualizarMarcador(partido.id, "local", e.target.value)}
-                        className="bg-[#0a1628] border border-[#1e3558] text-white text-center text-xl font-bold rounded-xl w-14 h-12 focus:outline-none focus:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-center text-xl font-bold rounded-xl w-14 h-12 focus:outline-none focus:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed"
                       />
                       <span className="text-gray-600 font-black text-xl">–</span>
                       <input
@@ -539,7 +539,7 @@ function App({ onLogout }) {
                         disabled={!jornadaAbierta}
                         value={marcadoresUsuario[partido.id]?.visitante ?? ""}
                         onChange={(e) => actualizarMarcador(partido.id, "visitante", e.target.value)}
-                        className="bg-[#0a1628] border border-[#1e3558] text-white text-center text-xl font-bold rounded-xl w-14 h-12 focus:outline-none focus:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-center text-xl font-bold rounded-xl w-14 h-12 focus:outline-none focus:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed"
                       />
                     </div>
 
