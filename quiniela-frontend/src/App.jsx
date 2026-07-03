@@ -352,6 +352,7 @@ function App({ onLogout }) {
             <TimerJornada
               key={jornadaNumero}
               jornada={jornadaNumero}
+              torneoId={torneoId}
               onCerrarJornada={handleCerrarJornada}
             />
           )}

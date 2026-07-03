@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
 
-function TimerJornada({ jornada, onCerrarJornada }) {
+function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
   const [tiempoRestante, setTiempoRestante] = useState("Cargando...");
   const [colorClase, setColorClase] = useState(
     "bg-green-100 text-green-700 border-green-300"
@@ -20,7 +20,8 @@ function TimerJornada({ jornada, onCerrarJornada }) {
       try {
         setTiempoRestante("Cargando...");
 
-        const response = await fetch(`${API}/jornadas/${jornada}`);
+        const qs = torneoId ? `?torneo_id=${torneoId}` : "";
+        const response = await fetch(`${API}/jornadas/${jornada}${qs}`);
 
         if (!response.ok) {
           console.warn("Jornada no encontrada:", jornada);
@@ -90,7 +91,7 @@ function TimerJornada({ jornada, onCerrarJornada }) {
       componenteActivo = false;
       if (intervaloActivo) clearInterval(intervaloActivo);
     };
-  }, [jornada, onCerrarJornada]);
+  }, [jornada, torneoId, onCerrarJornada]);
 
   return (
     <div

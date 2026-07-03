@@ -39,20 +39,8 @@ function AdminPartidos() {
             const data = await res.json();
             if (!res.ok || !Array.isArray(data)) return;
 
-            const jornadasConId = await Promise.all(
-                data.map(async (j) => {
-                    try {
-                        const detalleRes = await fetch(`${API}/jornadas/${j.numero}`);
-                        const detalle = await detalleRes.json();
-                        return { ...j, id: detalle.id ?? j.id };
-                    } catch {
-                        return j;
-                    }
-                })
-            );
-
-            setJornadas(jornadasConId);
-            const activa = jornadasConId.find((j) => j.estado !== "cerrada");
+            setJornadas(data);
+            const activa = data.find((j) => j.estado !== "cerrada");
             if (activa?.id) setJornadaId(activa.id);
         } catch (error) {
             console.error("Error cargando jornadas:", error);
