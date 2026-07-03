@@ -11,6 +11,8 @@ function AdminJornadas() {
   const [fechaCierre, setFechaCierre] = useState("");
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mensaje, setMensaje] = useState("");
+  const [reabrirNumero, setReabrirNumero] = useState(null);
+  const [nuevaFechaCierre, setNuevaFechaCierre] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -121,6 +123,32 @@ function AdminJornadas() {
     }
   };
 
+  const reabrirJornada = async (num) => {
+    if (!nuevaFechaCierre) {
+      setMensaje("⚠ Selecciona una nueva fecha de cierre");
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/jornadas/${num}/abrir`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ torneo_id: torneoSeleccionado, fecha_cierre: nuevaFechaCierre }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMensaje(`❌ ${data.mensaje || "Error reabriendo jornada"}`);
+        return;
+      }
+      setMensaje(`✅ ${data.mensaje}`);
+      setReabrirNumero(null);
+      setNuevaFechaCierre("");
+      cargarJornadas(torneoSeleccionado);
+    } catch (error) {
+      console.error(error);
+      setMensaje("❌ Error de conexión con el servidor");
+    }
+  };
+
   const limpiarFormulario = () => {
     setNumero("");
     setFechaInicio("");
@@ -207,52 +235,93 @@ function AdminJornadas() {
       {jornadas.length === 0 ? (
         <p className="text-gray-500 text-sm">No hay jornadas para este torneo.</p>
       ) : (
-        jornadas.map((j) => (
-          <div key={j.numero} className="flex justify-between items-center p-3 border-b border-gray-300">
-            <div>
-              <strong>
-                Jornada {j.numero}{" "}
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded text-xs text-white font-semibold ${
-                    j.estado === "cerrada" ? "bg-red-600" : "bg-green-600"
-                  }`}
-                >
-                  {j.estado}
-                </span>
-              </strong>
-              <br />
-              Inicio: {new Date(j.fecha_inicio).toLocaleString()}
-              <br />
-              Cierre: {new Date(j.fecha_cierre).toLocaleString()}
+        jornadas.map((j) => {
+          const cierreEnPasado = new Date(j.fecha_cierre) <= new Date();
+          const bloqueada = j.estado !== "abierta" || cierreEnPasado;
+
+          return (
+            <div key={j.numero} className="border-b border-gray-300">
+              <div className="flex justify-between items-center p-3">
+                <div>
+                  <strong>
+                    Jornada {j.numero}{" "}
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded text-xs text-white font-semibold ${
+                        bloqueada ? "bg-red-600" : "bg-green-600"
+                      }`}
+                    >
+                      {bloqueada ? "bloqueada" : j.estado}
+                    </span>
+                  </strong>
+                  <br />
+                  Inicio: {new Date(j.fecha_inicio).toLocaleString()}
+                  <br />
+                  Cierre: {new Date(j.fecha_cierre).toLocaleString()}
+                </div>
+
+                <div className="flex gap-2 flex-wrap justify-end">
+                  <button
+                    onClick={() => editarJornada(j)}
+                    className="bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700"
+                  >
+                    Editar
+                  </button>
+
+                  {bloqueada ? (
+                    <button
+                      onClick={() => {
+                        setReabrirNumero(j.numero);
+                        setNuevaFechaCierre("");
+                        setMensaje("");
+                      }}
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700"
+                    >
+                      🔓 Reabrir
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => cerrarJornada(j.numero)}
+                      className="bg-orange-600 text-white px-3 py-1.5 rounded hover:bg-orange-700"
+                    >
+                      Cerrar
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => eliminarJornada(j.numero)}
+                    className="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+
+              {reabrirNumero === j.numero && (
+                <div className="flex items-center gap-2 px-3 pb-3 bg-blue-50 border-t border-blue-100">
+                  <span className="text-sm font-semibold text-blue-700">Nueva fecha de cierre:</span>
+                  <input
+                    type="datetime-local"
+                    value={nuevaFechaCierre}
+                    onChange={(e) => setNuevaFechaCierre(e.target.value)}
+                    className="p-1.5 rounded border border-gray-300 text-sm"
+                  />
+                  <button
+                    onClick={() => reabrirJornada(j.numero)}
+                    className="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 text-sm font-semibold"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={() => { setReabrirNumero(null); setNuevaFechaCierre(""); }}
+                    className="bg-gray-400 text-white px-3 py-1.5 rounded hover:bg-gray-500 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => editarJornada(j)}
-                className="bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700"
-              >
-                Editar
-              </button>
-
-              <button
-                disabled={j.estado === "cerrada"}
-                onClick={() => cerrarJornada(j.numero)}
-                className={`bg-orange-600 text-white px-3 py-1.5 rounded hover:bg-orange-700 ${
-                  j.estado === "cerrada" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                }`}
-              >
-                Cerrar
-              </button>
-
-              <button
-                onClick={() => eliminarJornada(j.numero)}
-                className="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
