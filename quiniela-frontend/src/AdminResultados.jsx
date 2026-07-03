@@ -245,8 +245,6 @@ function AdminResultados({ onLogout }) {
                 </div>
             )}
 
-            <Ranking refresh={refreshRanking} jornada={jornadaId} />
-
             <hr className="my-8" />
 
             <div className="flex flex-wrap gap-3 mb-5">
