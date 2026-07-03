@@ -442,22 +442,22 @@ function App({ onLogout }) {
         {activeTab === "pronosticos" && (
           <div>
             {torneoTipo === "temporada" && miPagoTemporada?.pagado === false && (
-              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-900/30 border border-yellow-600/50">
-                <p className="font-semibold text-yellow-400">💳 Pago pendiente</p>
-                <p className="text-sm text-yellow-300/80 mt-1">
+              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-300">
+                <p className="font-semibold text-yellow-700">💳 Pago pendiente</p>
+                <p className="text-sm text-yellow-700/80 mt-1">
                   Tu inscripción aún aparece como pendiente.<br />
                   Monto registrado: <strong>${miPagoTemporada?.monto ?? "0.00"}</strong>
                 </p>
-                <p className="text-sm text-red-400 font-semibold mt-1">
+                <p className="text-sm text-red-600 font-semibold mt-1">
                   Contacta al administrador para confirmar tu pago.
                 </p>
               </div>
             )}
 
             {jornadaId && misPagosJornada[jornadaId] === false && (
-              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-900/30 border border-yellow-600/50">
-                <p className="font-semibold text-yellow-400">💳 Pago pendiente para esta jornada</p>
-                <p className="text-sm text-yellow-300/80 mt-1">
+              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-300">
+                <p className="font-semibold text-yellow-700">💳 Pago pendiente para esta jornada</p>
+                <p className="text-sm text-yellow-700/80 mt-1">
                   Tu pago para esta jornada no ha sido confirmado. Contacta al administrador.
                 </p>
               </div>
@@ -465,25 +465,16 @@ function App({ onLogout }) {
 
             <div className={`mb-4 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
               jornadaAbierta
-                ? "bg-green-900/30 text-green-400 border-green-600/40"
-                : "bg-red-900/30 text-red-400 border-red-600/40"
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-red-50 text-red-700 border-red-200"
             }`}>
               {jornadaAbierta
                 ? "🟢 Jornada abierta — puedes editar tus pronósticos"
                 : "🔒 Jornada cerrada — ya no es posible modificar pronósticos"}
             </div>
 
-            {jornadaAbierta && (
-              <button
-                className="mb-4 w-full sm:w-auto bg-green-600 hover:bg-green-500 active:scale-95 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-green-900/40 transition-all"
-                onClick={guardarJornadaCompleta}
-              >
-                ⚽ Guardar pronósticos
-              </button>
-            )}
-
             {mensaje && (
-              <p className="mb-4 text-sm font-medium text-gray-300">{mensaje}</p>
+              <p className="mb-4 text-sm font-medium text-gray-600">{mensaje}</p>
             )}
 
             {partidos.length === 0 && (
@@ -521,7 +512,7 @@ function App({ onLogout }) {
                     </div>
 
                     {partido.es_comodin && (
-                      <p className="text-center text-yellow-400 text-xs font-bold mt-2 tracking-wide uppercase">
+                      <p className="text-center text-amber-600 text-xs font-bold mt-2 tracking-wide uppercase">
                         ⭐ Partido comodín
                       </p>
                     )}
@@ -546,9 +537,9 @@ function App({ onLogout }) {
 
                     <div className="flex gap-2 mt-4">
                       {[
-                        { key: "L", label: "Local",     active: "bg-blue-600 ring-2 ring-blue-400 text-white",    inactive: "border border-blue-700/50 text-blue-400 hover:bg-blue-900/30" },
-                        { key: "E", label: "Empate",    active: "bg-yellow-500 ring-2 ring-yellow-400 text-black", inactive: "border border-yellow-700/50 text-yellow-400 hover:bg-yellow-900/30" },
-                        { key: "V", label: "Visitante", active: "bg-red-600 ring-2 ring-red-400 text-white",       inactive: "border border-red-700/50 text-red-400 hover:bg-red-900/30" },
+                        { key: "L", label: "Local",     active: "bg-blue-600 ring-2 ring-blue-300 text-white",    inactive: "border border-blue-200 text-blue-600 hover:bg-blue-50" },
+                        { key: "E", label: "Empate",    active: "bg-yellow-500 ring-2 ring-yellow-300 text-white", inactive: "border border-yellow-200 text-yellow-600 hover:bg-yellow-50" },
+                        { key: "V", label: "Visitante", active: "bg-red-600 ring-2 ring-red-300 text-white",       inactive: "border border-red-200 text-red-600 hover:bg-red-50" },
                       ].map(({ key, label, active, inactive }) => {
                         const sel = pronosticosUsuario[partido.id] === key;
                         return (
@@ -578,6 +569,19 @@ function App({ onLogout }) {
         {activeTab === "perfil"                && <PerfilJugador />}
         {activeTab === "historico-pronosticos" && <HistoricoPronosticos torneoId={torneoId} />}
       </div>
+
+      {/* ── BOTÓN FLOTANTE GUARDAR ── */}
+      {activeTab === "pronosticos" && jornadaAbierta && (
+        <div className="fixed bottom-5 right-4 sm:right-6 z-50">
+          <button
+            onClick={guardarJornadaCompleta}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold px-5 py-3 rounded-2xl shadow-xl shadow-green-300/60 transition-all"
+          >
+            <span className="text-base">⚽</span>
+            <span>Guardar pronósticos</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
