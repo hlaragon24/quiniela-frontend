@@ -316,10 +316,10 @@ function App({ onLogout }) {
     { value: "inicio",                icon: "🏠", label: "Inicio" },
     { value: "pronosticos",           icon: "⚽", label: "Pronósticos" },
     { value: "historial",             icon: "📈", label: "Historial" },
-    { value: "misResultados",         icon: "📋", label: "Resultados" },
+    { value: "misResultados",         icon: "📋", label: "Mis pronósticos" },
     { value: "tabla-general",         icon: "🏆", label: "Tabla" },
     { value: "perfil",                icon: "👤", label: "Perfil" },
-    { value: "historico-pronosticos", icon: "📚", label: "Mis pronóst." },
+    { value: "historico-pronosticos", icon: "📚", label: "Pronósticos" },
   ];
 
   if (torneos.length === 0 && torneoId === "") {
