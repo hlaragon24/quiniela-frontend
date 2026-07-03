@@ -6,6 +6,7 @@ import App from "./App";
 import AdminResultados from "./AdminResultados";
 
 import { useState } from "react";
+import { setOnUnauthorized } from "./config/api";
 
 import "./index.css";
 
@@ -25,6 +26,8 @@ function Root() {
     setSesionActiva(null);
 
   };
+
+  setOnUnauthorized(cerrarSesion);
 
   if (!sesionActiva) {
 

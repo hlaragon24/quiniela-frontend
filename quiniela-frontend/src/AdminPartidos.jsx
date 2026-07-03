@@ -15,6 +15,7 @@ function AdminPartidos() {
     const [jornadaId, setJornadaId] = useState("");
     const [comodin, setComodin] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
+    const [mensaje, setMensaje] = useState("");
 
     const token = localStorage.getItem("token");
 
@@ -85,30 +86,39 @@ function AdminPartidos() {
 
     const guardarPartido = async () => {
         if (!local || !visitante || !jornadaId) {
-            alert("Completa los campos obligatorios");
+            setMensaje("❌ Completa los campos obligatorios");
             return;
         }
 
         const url = editandoId ? `${API}/partidos/${editandoId}` : `${API}/partidos`;
         const method = editandoId ? "PUT" : "POST";
 
-        await fetch(url, {
-            method,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                local,
-                visitante,
-                fecha,
-                jornada_id: Number(jornadaId),
-                es_comodin: comodin,
-            }),
-        });
-
-        limpiarFormulario();
-        cargarPartidos();
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    local,
+                    visitante,
+                    fecha,
+                    jornada_id: Number(jornadaId),
+                    es_comodin: comodin,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setMensaje(`❌ ${data.mensaje || "Error guardando partido"}`);
+                return;
+            }
+            setMensaje(`✅ Partido ${editandoId ? "actualizado" : "creado"} correctamente`);
+            limpiarFormulario();
+            cargarPartidos();
+        } catch {
+            setMensaje("❌ Error de conexión con el servidor");
+        }
     };
 
     const editarPartido = (p) => {
@@ -122,11 +132,21 @@ function AdminPartidos() {
 
     const eliminarPartido = async (id) => {
         if (!confirm("¿Eliminar partido?")) return;
-        await fetch(`${API}/partidos/${id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        cargarPartidos();
+        try {
+            const res = await fetch(`${API}/partidos/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setMensaje(`❌ ${data.mensaje || "Error eliminando partido"}`);
+                return;
+            }
+            setMensaje("✅ Partido eliminado");
+            cargarPartidos();
+        } catch {
+            setMensaje("❌ Error de conexión con el servidor");
+        }
     };
 
     const limpiarFormulario = () => {
@@ -144,6 +164,10 @@ function AdminPartidos() {
     return (
         <div>
             <h2 className="text-xl font-bold mb-4">Gestión de Partidos ⚽</h2>
+
+            {mensaje && (
+                <p className="mb-3 text-sm font-medium text-gray-700">{mensaje}</p>
+            )}
 
             {/* Selector de torneo */}
             <div className="mb-4 flex items-center gap-3">

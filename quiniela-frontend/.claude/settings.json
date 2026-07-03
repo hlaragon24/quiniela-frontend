@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend\" status)",
+      "Bash(git -C \"c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend\" diff --stat)",
+      "Bash(git -C \"c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend\" log --oneline -5)",
+      "Bash(git -C \"c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend\" add src/AdminCampeon.jsx src/AdminJornadas.jsx src/AdminPartidos.jsx src/AdminResultados.jsx src/AdminUsuarios.jsx src/App.jsx src/Dashboard.jsx src/HistoricoGeneral.jsx src/MisResultados.jsx src/Quiniela.jsx src/AdminTorneos.jsx)",
+      "Bash(git -C c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend commit -m ' *)",
+      "Bash(git -C \"c:/Users/HECTORLORENZOARAGONN/Proyectos/Quiniela/frontend-quiniela/quiniela-frontend\" push)"
+    ]
+  }
+}

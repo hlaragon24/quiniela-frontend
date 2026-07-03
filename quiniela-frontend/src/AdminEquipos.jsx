@@ -15,9 +15,14 @@ export default function AdminEquipos() {
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const cargarEquipos = async () => {
-    const res = await fetch(`${API}/equipos`);
-    const data = await res.json();
-    setEquipos(data);
+    try {
+      const res = await fetch(`${API}/equipos`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setEquipos(data);
+    } catch (err) {
+      console.error("Error cargando equipos:", err);
+    }
   };
 
   useEffect(() => { cargarEquipos(); }, []);
@@ -40,14 +45,16 @@ export default function AdminEquipos() {
     const url = editandoId ? `${API}/equipos/${editandoId}` : `${API}/equipos`;
     const method = editandoId ? "PUT" : "POST";
 
-    const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
-    const data = await res.json();
-
-    if (!res.ok) { setError(data.mensaje || "Error guardando equipo"); return; }
-
-    setMensaje(data.mensaje);
-    limpiar();
-    cargarEquipos();
+    try {
+      const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!res.ok) { setError(data.mensaje || "Error guardando equipo"); return; }
+      setMensaje(data.mensaje);
+      limpiar();
+      cargarEquipos();
+    } catch {
+      setError("Error de conexión con el servidor");
+    }
   };
 
   const editar = (equipo) => {
@@ -63,10 +70,14 @@ export default function AdminEquipos() {
 
   const eliminar = async (id) => {
     if (!confirm("¿Eliminar este equipo?")) return;
-    const res = await fetch(`${API}/equipos/${id}`, { method: "DELETE", headers });
-    const data = await res.json();
-    if (res.ok) { setMensaje(data.mensaje); cargarEquipos(); }
-    else setError(data.mensaje || "Error eliminando equipo");
+    try {
+      const res = await fetch(`${API}/equipos/${id}`, { method: "DELETE", headers });
+      const data = await res.json();
+      if (res.ok) { setMensaje(data.mensaje); cargarEquipos(); }
+      else setError(data.mensaje || "Error eliminando equipo");
+    } catch {
+      setError("Error de conexión con el servidor");
+    }
   };
 
   return (

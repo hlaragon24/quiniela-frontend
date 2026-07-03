@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Dashboard from "./Dashboard";
 import Ranking from "./Ranking";
 import TimerJornada from "./TimerJornada";
@@ -8,7 +8,7 @@ import HistoricoGeneral from "./HistoricoGeneral";
 import TablaGeneral from "./TablaGeneral";
 import PerfilJugador from "./PerfilJugador";
 import HistoricoPronosticos from "./HistoricoPronosticos";
-import { API } from "./config/api";
+import { API, apiFetch } from "./config/api";
 import TeamShield from "./components/TeamShield";
 
 import {
@@ -46,10 +46,12 @@ function App({ onLogout }) {
 
   const jornadaId = jornadaActual?.id ?? null;
 
+  const handleCerrarJornada = useCallback(() => setJornadaAbierta(false), []);
+
   // ── Torneos ──────────────────────────────────────────────────────────
   const cargarTorneos = async () => {
     try {
-      const res = await fetch(`${API}/torneos/mis-torneos`, {
+      const res = await apiFetch(`${API}/torneos/mis-torneos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -66,7 +68,7 @@ function App({ onLogout }) {
 
   const cargarMiPago = async (tid, tipo) => {
     try {
-      const res  = await fetch(`${API}/pagos/mi-pago?torneo_id=${tid}`, {
+      const res  = await apiFetch(`${API}/pagos/mi-pago?torneo_id=${tid}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) { setMiPagoTemporada(null); setMisPagosJornada({}); return; }
@@ -169,7 +171,7 @@ function App({ onLogout }) {
     if (!token || !jornadaDbId) return;
 
     try {
-      const response = await fetch(`${API}/pronosticos/usuario/${jornadaDbId}`, {
+      const response = await apiFetch(`${API}/pronosticos/usuario/${jornadaDbId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -293,7 +295,7 @@ function App({ onLogout }) {
     }));
 
     try {
-      const response = await fetch(`${API}/pronosticos/guardar-jornada`, {
+      const response = await apiFetch(`${API}/pronosticos/guardar-jornada`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -349,7 +351,7 @@ function App({ onLogout }) {
           <TimerJornada
             key={jornadaNumero}
             jornada={jornadaNumero}
-            onCerrarJornada={() => setJornadaAbierta(false)}
+            onCerrarJornada={handleCerrarJornada}
           />
         )}
 
