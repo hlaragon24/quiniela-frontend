@@ -321,7 +321,7 @@ function App({ onLogout }) {
     { value: "misResultados",         icon: "📋", label: "Mis pronósticos" },
     { value: "tabla-general",         icon: "🏆", label: "Tabla" },
     { value: "perfil",                icon: "👤", label: "Perfil" },
-    { value: "historico-pronosticos", icon: "📚", label: "Pronósticos" },
+    { value: "historico-pronosticos", icon: "📚", label: "Histórico general" },
     { value: "reglamento", icon: "📋", label: "Reglamento" },
   ];
 
@@ -437,6 +437,8 @@ function App({ onLogout }) {
             jornadaAbierta={jornadaAbierta}
             partidos={partidos}
             pronosticosUsuario={pronosticosUsuario}
+            marcadoresUsuario={marcadoresUsuario}
+            jornadasCount={listaJornadas.length}
             torneoId={torneoId}
           />
         )}
@@ -444,27 +446,30 @@ function App({ onLogout }) {
         {/* PRONÓSTICOS */}
         {activeTab === "pronosticos" && (
           <div>
-            {torneoTipo === "temporada" && miPagoTemporada?.pagado === false && (
-              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-300">
-                <p className="font-semibold text-yellow-700">💳 Pago pendiente</p>
-                <p className="text-sm text-yellow-700/80 mt-1">
-                  Tu inscripción aún aparece como pendiente.<br />
-                  Monto registrado: <strong>${miPagoTemporada?.monto ?? "0.00"}</strong>
-                </p>
-                <p className="text-sm text-red-600 font-semibold mt-1">
-                  Contacta al administrador para confirmar tu pago.
-                </p>
-              </div>
-            )}
-
-            {jornadaId && misPagosJornada[jornadaId] === false && (
-              <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-300">
-                <p className="font-semibold text-yellow-700">💳 Pago pendiente para esta jornada</p>
-                <p className="text-sm text-yellow-700/80 mt-1">
-                  Tu pago para esta jornada no ha sido confirmado. Contacta al administrador.
-                </p>
-              </div>
-            )}
+            {(() => {
+              const pagoTemporadaPendiente = torneoTipo === "temporada" && miPagoTemporada?.pagado === false;
+              const pagoJornadaPendiente   = Boolean(jornadaId && misPagosJornada[jornadaId] === false);
+              if (!pagoTemporadaPendiente && !pagoJornadaPendiente) return null;
+              return (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-300 space-y-1">
+                  <p className="font-semibold text-yellow-700">💳 Pago pendiente</p>
+                  {pagoTemporadaPendiente && (
+                    <p className="text-sm text-yellow-700/80">
+                      Inscripción pendiente — monto registrado:{" "}
+                      <strong>${miPagoTemporada?.monto ?? "0.00"}</strong>
+                    </p>
+                  )}
+                  {pagoJornadaPendiente && (
+                    <p className="text-sm text-yellow-700/80">
+                      Tu pago para esta jornada no ha sido confirmado.
+                    </p>
+                  )}
+                  <p className="text-sm text-red-600 font-semibold">
+                    Contacta al administrador para regularizar tu pago.
+                  </p>
+                </div>
+              );
+            })()}
 
             <div className={`mb-4 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
               jornadaAbierta

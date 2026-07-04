@@ -69,7 +69,9 @@ function HistorialJornadas({ torneoId }) {
   const rankingJornada = useMemo(() => {
     return datos
       .filter((d) => String(d.jornada_numero) === String(jornadaSel))
-      .sort((a, b) => Number(b.puntos) - Number(a.puntos));
+      .sort((a, b) =>
+        Number(b.puntos) - Number(a.puntos) || a.nombre.localeCompare(b.nombre)
+      );
   }, [datos, jornadaSel]);
 
   // Datos para vista acumulada
@@ -309,12 +311,12 @@ function HistorialJornadas({ torneoId }) {
 
           {/* Leyenda de colores */}
           <div className="flex items-center gap-3 px-3 py-2 border-t border-gray-100 text-xs text-gray-500 flex-wrap">
-            <span className="font-semibold">Puntos:</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> Alto</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200 inline-block" /> Bueno</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-100 inline-block border" /> Regular</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-100 inline-block border" /> Bajo</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block border" /> Sin puntos</span>
+            <span className="font-semibold">Puntos vs mejor de la jornada:</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> ≥ 85%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200 inline-block" /> ≥ 60%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-100 inline-block border" /> ≥ 30%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-100 inline-block border" /> &lt; 30%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block border" /> 0 pts</span>
           </div>
         </div>
       )}

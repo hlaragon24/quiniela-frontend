@@ -91,7 +91,12 @@ function MisResultados({ torneoId }) {
                 Number(partido.marcador_local) === Number(partido.goles_local) &&
                 Number(partido.marcador_visitante) === Number(partido.goles_visitante);
 
-              const acerto = tieneResultado && Number(partido.puntos) > 0;
+              const pronosticoTexto = partido.pronostico_usuario === "L"
+                ? "Local"
+                : partido.pronostico_usuario === "V"
+                  ? "Visitante"
+                  : "Empate";
+              const acerto = tieneResultado && pronosticoTexto === resultadoReal;
 
               const borderColor = !tieneResultado
                 ? "border-gray-200"

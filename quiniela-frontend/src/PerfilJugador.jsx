@@ -6,6 +6,7 @@ function PerfilJugador({ torneoId }) {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [filtrarTorneo, setFiltrarTorneo] = useState(true);
 
   const [pwActual, setPwActual] = useState("");
   const [pwNuevo, setPwNuevo] = useState("");
@@ -19,8 +20,9 @@ function PerfilJugador({ torneoId }) {
       setCargando(true);
       setError("");
 
-      const url = torneoId
-        ? `${API}/usuarios/perfil?torneo_id=${torneoId}`
+      const tid = filtrarTorneo ? torneoId : null;
+      const url = tid
+        ? `${API}/usuarios/perfil?torneo_id=${tid}`
         : `${API}/usuarios/perfil`;
 
       const res = await fetch(url, {
@@ -47,7 +49,7 @@ function PerfilJugador({ torneoId }) {
 
   useEffect(() => {
     cargarPerfil();
-  }, [torneoId]);
+  }, [torneoId, filtrarTorneo]);
 
   const cambiarPassword = async () => {
     setPwMensaje("");
@@ -97,12 +99,28 @@ function PerfilJugador({ torneoId }) {
     <div className="mt-6 space-y-6">
       <Card className="shadow-md border">
         <CardContent className="p-6">
-          <h2 className="text-2xl font-bold mb-1">
-            👤 Mi Perfil
-          </h2>
+          <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+            <h2 className="text-2xl font-bold">👤 Mi Perfil</h2>
+            {torneoId && (
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-semibold">
+                <button
+                  onClick={() => setFiltrarTorneo(true)}
+                  className={`px-3 py-1.5 transition-colors ${filtrarTorneo ? "bg-green-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                >
+                  Este torneo
+                </button>
+                <button
+                  onClick={() => setFiltrarTorneo(false)}
+                  className={`px-3 py-1.5 transition-colors ${!filtrarTorneo ? "bg-green-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                >
+                  Total histórico
+                </button>
+              </div>
+            )}
+          </div>
 
           <p className="text-gray-500 mb-6">
-            Estadísticas generales de tu participación.
+            {filtrarTorneo && torneoId ? "Estadísticas del torneo actual." : "Estadísticas de todos tus torneos."}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

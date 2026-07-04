@@ -63,7 +63,16 @@ function TablaGeneral({ torneoId }) {
       <Card className="shadow-md border">
         <CardContent className="p-6">
           <h2 className="text-2xl font-bold mb-1">🏆 Tabla General</h2>
-          <p className="text-gray-500 mb-6">Acumulado total del torneo por jugador.</p>
+          <p className="text-gray-500 mb-3">Puntos acumulados del torneo por jugador.</p>
+
+          {/* Leyenda de puntuación */}
+          <div className="flex flex-wrap gap-3 mb-5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            <span className="font-semibold text-gray-700">¿Cómo se puntúa?</span>
+            <span><span className="font-bold text-blue-700">Pronóstico</span> = resultado correcto (L/E/V) → +1 pt</span>
+            <span><span className="font-bold text-green-700">Marcador</span> = goles exactos → +2 pts</span>
+            <span><span className="font-bold text-orange-600">Comodín</span> = partido especial ⭐ con doble bonus</span>
+            <span><span className="font-bold text-yellow-700">Campeón</span> = pronóstico de campeón de temporada</span>
+          </div>
 
           {ranking.length === 0 ? (
             <p className="text-gray-500">Todavía no hay jugadores en la tabla general.</p>
@@ -74,11 +83,23 @@ function TablaGeneral({ torneoId }) {
                   <tr className="bg-gray-100 text-left">
                     <th className="p-3 border">Posición</th>
                     <th className="p-3 border">Jugador</th>
-                    <th className="p-3 border text-center">Pronóstico</th>
-                    <th className="p-3 border text-center">Marcador</th>
-                    <th className="p-3 border text-center">Comodín</th>
-                    <th className="p-3 border text-center">Campeón</th>
-                    <th className="p-3 border text-center">Total</th>
+                    <th className="p-3 border text-center">
+                      <span className="text-blue-700">Pronóstico</span>
+                      <div className="text-xs font-normal text-gray-400">resultado</div>
+                    </th>
+                    <th className="p-3 border text-center">
+                      <span className="text-green-700">Marcador</span>
+                      <div className="text-xs font-normal text-gray-400">goles exactos</div>
+                    </th>
+                    <th className="p-3 border text-center">
+                      <span className="text-orange-600">Comodín</span>
+                      <div className="text-xs font-normal text-gray-400">bonus ⭐</div>
+                    </th>
+                    <th className="p-3 border text-center">
+                      <span className="text-yellow-700">Campeón</span>
+                      <div className="text-xs font-normal text-gray-400">temporada</div>
+                    </th>
+                    <th className="p-3 border text-center font-bold">Total<div className="text-xs font-normal text-gray-400">acumulado</div></th>
                   </tr>
                 </thead>
 
@@ -123,6 +144,10 @@ function TablaGeneral({ torneoId }) {
               </table>
             </div>
           )}
+
+          <p className="mt-4 text-xs text-gray-400 text-right">
+            ¿Dudas sobre los puntos? Consulta el tab <span className="font-semibold">Reglamento 📋</span>
+          </p>
         </CardContent>
       </Card>
     </div>

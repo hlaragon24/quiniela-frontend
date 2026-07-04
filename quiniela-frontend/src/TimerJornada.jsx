@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API } from "./config/api";
 
 function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
@@ -7,7 +7,11 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
     "bg-green-100 text-green-700 border-green-300"
   );
 
+  const hasClosed = useRef(false);
+
   useEffect(() => {
+    hasClosed.current = false;
+
     if (!jornada) {
       setTiempoRestante("Sin jornada");
       return undefined;
@@ -55,7 +59,10 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
             setTiempoRestante("🔒 Jornada cerrada");
             setColorClase("bg-red-100 text-red-700 border-red-300");
 
-            if (onCerrarJornada) onCerrarJornada();
+            if (onCerrarJornada && !hasClosed.current) {
+              hasClosed.current = true;
+              onCerrarJornada();
+            }
             if (intervaloActivo) clearInterval(intervaloActivo);
             return;
           }

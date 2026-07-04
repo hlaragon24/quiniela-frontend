@@ -40,7 +40,7 @@ function formatearDinero(valor) {
     return Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 }
 
-function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario, torneoId }) {
+function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario, marcadoresUsuario, jornadasCount, torneoId }) {
     const [resumen, setResumen] = useState(null);
     const [ranking, setRanking] = useState([]);
     const [bottom5, setBottom5] = useState([]);
@@ -51,6 +51,7 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
     const [mensajeCampeon, setMensajeCampeon] = useState("");
     const [cargando, setCargando] = useState(true);
     const [guardandoCampeon, setGuardandoCampeon] = useState(false);
+    const [equipos, setEquipos] = useState([]);
 
     const token = localStorage.getItem("token");
 
@@ -168,6 +169,13 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
     };
 
     useEffect(() => {
+        fetch(`${API}/equipos`)
+            .then((r) => r.json())
+            .then((d) => { if (Array.isArray(d)) setEquipos(d); })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
         if (!torneoId) return;
         setResumen(null);
         setRanking([]);
@@ -181,7 +189,14 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
     }, [torneoId]);
 
     const totalPartidos = partidos.length;
-    const pronosticosCompletados = partidos.filter((p) => pronosticosUsuario[p.id]).length;
+    const pronosticosCompletados = partidos.filter((p) => {
+        const tieneResultado = Boolean(pronosticosUsuario[p.id]);
+        const m = marcadoresUsuario?.[p.id];
+        const tieneMarcador = m != null &&
+            m.local !== undefined && m.local !== "" &&
+            m.visitante !== undefined && m.visitante !== "";
+        return tieneResultado && tieneMarcador;
+    }).length;
 
     const campeonBloqueado =
         guardandoCampeon ||
@@ -192,6 +207,9 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
     const estaEnTop3 = Number(resumen?.posicionGeneral) <= 3;
     const esLider = Number(resumen?.posicionGeneral) === 1;
     const puntosParaLider = Number(resumen?.diferenciaLider || 0);
+    const promedioPorJornada = jornadasCount > 0
+        ? (Number(resumen?.puntosJornadas ?? 0) / jornadasCount).toFixed(1)
+        : null;
 
     if (cargando) {
         return <div className="mt-6 text-gray-500">Cargando inicio...</div>;
@@ -244,8 +262,26 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
 
                         <div className="rounded-xl bg-yellow-50 border border-yellow-100 p-4">
                             <p className="text-sm text-gray-500">Campeón</p>
-                            <p className="text-3xl font-bold text-yellow-700">{resumen.puntosCampeon}</p>
-                            <p className="text-sm text-gray-500">puntos por campeón</p>
+                            {resumen.campeonReal ? (
+                                miCampeon?.equipo && miCampeon.equipo.trim().toLowerCase() === resumen.campeonReal.trim().toLowerCase() ? (
+                                    <>
+                                        <p className="text-2xl font-bold text-green-600">¡Acertaste!</p>
+                                        <p className="text-sm text-green-600 font-semibold">+{resumen.puntosCampeon} pts</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-xl font-bold text-red-500">No acertaste</p>
+                                        <p className="text-xs text-gray-500">Ganó: {resumen.campeonReal}</p>
+                                    </>
+                                )
+                            ) : (
+                                <>
+                                    <p className="text-3xl font-bold text-yellow-700">{resumen.puntosCampeon}</p>
+                                    <p className="text-sm text-gray-400">
+                                        {miCampeon?.equipo ? `Tu apuesta: ${miCampeon.equipo}` : "Sin pronóstico aún"}
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         <div className="rounded-xl bg-purple-50 border border-purple-100 p-4">
@@ -285,7 +321,7 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         <div className="rounded-lg border bg-white p-4">
                             <p className="text-sm text-gray-500">Aciertos</p>
                             <p className="text-2xl font-bold text-blue-700">{resumen.aciertos ?? 0}</p>
@@ -302,6 +338,13 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                                     : "—"}
                             </p>
                         </div>
+                        {promedioPorJornada && (
+                            <div className="rounded-lg border bg-white p-4">
+                                <p className="text-sm text-gray-500">Promedio/jornada</p>
+                                <p className="text-2xl font-bold text-orange-600">{promedioPorJornada}</p>
+                                <p className="text-xs text-gray-400">pts promedio</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-5 rounded-lg border px-4 py-3 bg-white">
@@ -394,8 +437,16 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                                 <p><span className="font-semibold">Puntos posibles:</span> {resumen.campeonReal ? resumen.puntosCampeon : "Pendiente"}</p>
                             </div>
 
+                            {equipos.length > 0 && (
+                                <datalist id="equipos-campeon-list">
+                                    {equipos.map((e) => (
+                                        <option key={e.id} value={e.nombre} />
+                                    ))}
+                                </datalist>
+                            )}
                             <input
                                 type="text"
+                                list="equipos-campeon-list"
                                 value={campeonInput}
                                 onChange={(e) => setCampeonInput(e.target.value)}
                                 placeholder="Ej. Chivas"
