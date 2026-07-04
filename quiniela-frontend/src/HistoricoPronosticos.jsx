@@ -111,10 +111,25 @@ function HistoricoPronosticos({ torneoId }) {
                     </thead>
 
                     <tbody>
-                        {registros.map((fila) => (
+                        {registros.map((fila) => {
+                            const sinResultado = fila.goles_local === null || fila.goles_visitante === null;
+                            const marcadorExacto = !sinResultado &&
+                                Number(fila.pronostico_local) === Number(fila.goles_local) &&
+                                Number(fila.pronostico_visitante) === Number(fila.goles_visitante);
+                            const acerto = !sinResultado && Number(fila.puntos_calculados) > 0;
+
+                            const rowBg = sinResultado
+                                ? "hover:bg-gray-50"
+                                : marcadorExacto
+                                    ? "bg-green-50"
+                                    : acerto
+                                        ? "bg-yellow-50"
+                                        : "bg-red-50";
+
+                            return (
                             <tr
                                 key={`${fila.usuario_id}-${fila.partido_id}`}
-                                className="border-b border-gray-200 hover:bg-gray-50"
+                                className={`border-b border-gray-200 ${rowBg}`}
                             >
                                 <td className="text-center p-2.5">J{fila.jornada_numero}</td>
                                 <td className="p-2.5">{fila.jugador}</td>
@@ -133,7 +148,8 @@ function HistoricoPronosticos({ torneoId }) {
                                     <strong>{fila.puntos_calculados}</strong>
                                 </td>
                             </tr>
-                        ))}
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

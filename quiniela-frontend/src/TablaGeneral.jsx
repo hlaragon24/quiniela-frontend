@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 function obtenerMedalla(posicion) {
   if (Number(posicion) === 1) return "🥇";
   if (Number(posicion) === 2) return "🥈";
+  if (Number(posicion) === 3) return "🥉";
   return `#${posicion}`;
 }
 
@@ -12,6 +13,8 @@ function TablaGeneral({ torneoId }) {
   const [ranking, setRanking] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
+  const miId = Number(localStorage.getItem("usuario_id"));
 
   const cargarTablaGeneral = async () => {
     if (!torneoId) return;
@@ -71,34 +74,51 @@ function TablaGeneral({ torneoId }) {
                   <tr className="bg-gray-100 text-left">
                     <th className="p-3 border">Posición</th>
                     <th className="p-3 border">Jugador</th>
-                    <th className="p-3 border text-center">Puntos pronóstico</th>
-                    <th className="p-3 border text-center">Puntos marcador</th>
-                    <th className="p-3 border text-center">Puntos comodín</th>
+                    <th className="p-3 border text-center">Pronóstico</th>
+                    <th className="p-3 border text-center">Marcador</th>
+                    <th className="p-3 border text-center">Comodín</th>
                     <th className="p-3 border text-center">Campeón</th>
                     <th className="p-3 border text-center">Total</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {ranking.map((jugador) => (
-                    <tr
-                      key={`tabla-general-${jugador.id}`}
-                      className={`hover:bg-gray-50 ${Number(jugador.posicion) === 1 ? "bg-yellow-50" : ""} ${Number(jugador.posicion) === 2 ? "bg-gray-50" : ""}`}
-                    >
-                      <td className="p-3 border font-bold">{obtenerMedalla(jugador.posicion)}</td>
-                      <td className="p-3 border font-semibold">{jugador.nombre}</td>
-                      <td className="p-3 border text-center">{jugador.puntos_pronostico}</td>
-                      <td className="p-3 border text-center">{jugador.puntos_marcador}</td>
-                      <td className="p-3 border text-center">{jugador.puntos_comodin}</td>
-                      <td className="p-3 border text-center">
-                        <div className="font-semibold">{jugador.puntos_campeon}</div>
-                        {jugador.campeon_pronosticado && (
-                          <div className="text-xs text-gray-500">{jugador.campeon_pronosticado}</div>
-                        )}
-                      </td>
-                      <td className="p-3 border text-center text-lg font-bold">{jugador.total}</td>
-                    </tr>
-                  ))}
+                  {ranking.map((jugador) => {
+                    const esMio = jugador.id === miId;
+                    const pos = Number(jugador.posicion);
+                    const rowClass = esMio
+                      ? "ring-2 ring-inset ring-green-400 bg-green-50 font-semibold"
+                      : pos === 1
+                        ? "bg-yellow-50"
+                        : pos === 2
+                          ? "bg-gray-50"
+                          : pos === 3
+                            ? "bg-orange-50"
+                            : "hover:bg-gray-50";
+
+                    return (
+                      <tr
+                        key={`tabla-general-${jugador.id}`}
+                        className={rowClass}
+                      >
+                        <td className="p-3 border font-bold">{obtenerMedalla(jugador.posicion)}</td>
+                        <td className="p-3 border font-semibold">
+                          {jugador.nombre}
+                          {esMio && <span className="ml-1.5 text-xs text-green-600 font-bold">(tú)</span>}
+                        </td>
+                        <td className="p-3 border text-center">{jugador.puntos_pronostico}</td>
+                        <td className="p-3 border text-center">{jugador.puntos_marcador}</td>
+                        <td className="p-3 border text-center">{jugador.puntos_comodin}</td>
+                        <td className="p-3 border text-center">
+                          <div className="font-semibold">{jugador.puntos_campeon}</div>
+                          {jugador.campeon_pronosticado && (
+                            <div className="text-xs text-gray-500">{jugador.campeon_pronosticado}</div>
+                          )}
+                        </td>
+                        <td className="p-3 border text-center text-lg font-bold">{jugador.total}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

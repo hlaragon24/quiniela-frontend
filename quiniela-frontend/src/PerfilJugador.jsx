@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import { API } from "./config/api";
 import { Card, CardContent } from "@/components/ui/card";
 
-function PerfilJugador() {
+function PerfilJugador({ torneoId }) {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
+  const [pwActual, setPwActual] = useState("");
+  const [pwNuevo, setPwNuevo] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwMensaje, setPwMensaje] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -14,7 +19,11 @@ function PerfilJugador() {
       setCargando(true);
       setError("");
 
-      const res = await fetch(`${API}/usuarios/perfil`, {
+      const url = torneoId
+        ? `${API}/usuarios/perfil?torneo_id=${torneoId}`
+        : `${API}/usuarios/perfil`;
+
+      const res = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -38,7 +47,37 @@ function PerfilJugador() {
 
   useEffect(() => {
     cargarPerfil();
-  }, []);
+  }, [torneoId]);
+
+  const cambiarPassword = async () => {
+    setPwMensaje("");
+    if (!pwActual || !pwNuevo || !pwConfirm) {
+      setPwMensaje("❌ Completa todos los campos");
+      return;
+    }
+    if (pwNuevo !== pwConfirm) {
+      setPwMensaje("❌ Las contraseñas nuevas no coinciden");
+      return;
+    }
+    if (pwNuevo.length < 6) {
+      setPwMensaje("❌ La nueva contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/usuarios/mi-password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ passwordActual: pwActual, passwordNuevo: pwNuevo }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPwMensaje(`❌ ${data.mensaje}`); return; }
+      setPwMensaje(`✅ ${data.mensaje}`);
+      setPwActual(""); setPwNuevo(""); setPwConfirm("");
+    } catch {
+      setPwMensaje("❌ Error de conexión");
+    }
+  };
 
   if (cargando) {
     return <p className="mt-6 text-gray-500">Cargando perfil...</p>;
@@ -116,6 +155,60 @@ function PerfilJugador() {
               <p className="text-sm text-gray-500">Puntos totales</p>
               <p className="text-2xl font-bold">{perfil.puntosTotales}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-md border">
+        <CardContent className="p-6">
+          <h3 className="text-xl font-bold mb-4">🔒 Cambiar contraseña</h3>
+
+          <div className="space-y-3 max-w-sm">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+              <input
+                type="password"
+                value={pwActual}
+                onChange={(e) => setPwActual(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="Tu contraseña actual"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+              <input
+                type="password"
+                value={pwNuevo}
+                onChange={(e) => setPwNuevo(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
+              <input
+                type="password"
+                value={pwConfirm}
+                onChange={(e) => setPwConfirm(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="Repite la nueva contraseña"
+              />
+            </div>
+
+            {pwMensaje && (
+              <p className={`text-sm font-medium ${pwMensaje.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+                {pwMensaje}
+              </p>
+            )}
+
+            <button
+              onClick={cambiarPassword}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700"
+            >
+              Cambiar contraseña
+            </button>
           </div>
         </CardContent>
       </Card>

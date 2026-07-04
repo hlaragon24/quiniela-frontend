@@ -304,6 +304,7 @@ function App({ onLogout }) {
       }
 
       setMensaje(`✅ ${data.mensaje}`);
+      setTimeout(() => setMensaje(""), 5000);
       setRefreshRanking((prev) => !prev);
       if (jornadaId) await cargarPronosticosUsuario(jornadaId);
     } catch (error) {
@@ -568,7 +569,7 @@ function App({ onLogout }) {
         {activeTab === "historial"             && <RankingHistorial torneoId={torneoId} />}
         {activeTab === "misResultados"         && <MisResultados torneoId={torneoId} />}
         {activeTab === "tabla-general"         && <TablaGeneral torneoId={torneoId} />}
-        {activeTab === "perfil"                && <PerfilJugador />}
+        {activeTab === "perfil"                && <PerfilJugador torneoId={torneoId} />}
         {activeTab === "historico-pronosticos" && <HistoricoPronosticos torneoId={torneoId} />}
         {activeTab === "reglamento" && <Reglamento torneoId={torneoId} />}
       </div>
