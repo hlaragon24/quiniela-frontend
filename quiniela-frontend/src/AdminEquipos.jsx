@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
 
 const EMPTY_FORM = { nombre: "", abreviacion: "", escudo_url: "", color: "#6B7280" };
+const PAGE_SIZE = 10;
 
 export default function AdminEquipos() {
   const [equipos, setEquipos] = useState([]);
@@ -10,6 +11,8 @@ export default function AdminEquipos() {
   const [editandoId, setEditandoId] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
 
   const token = localStorage.getItem("token");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -26,6 +29,25 @@ export default function AdminEquipos() {
   };
 
   useEffect(() => { cargarEquipos(); }, []);
+
+  const equiposFiltrados = useMemo(() => {
+    if (!busqueda.trim()) return equipos;
+    const q = busqueda.toLowerCase();
+    return equipos.filter(
+      (e) =>
+        e.nombre.toLowerCase().includes(q) ||
+        (e.abreviacion || "").toLowerCase().includes(q)
+    );
+  }, [equipos, busqueda]);
+
+  const totalPaginas = Math.max(1, Math.ceil(equiposFiltrados.length / PAGE_SIZE));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const equiposPagina = equiposFiltrados.slice(
+    (paginaActual - 1) * PAGE_SIZE,
+    paginaActual * PAGE_SIZE
+  );
+
+  const cambiarBusqueda = (val) => { setBusqueda(val); setPagina(1); };
 
   const limpiar = () => {
     setForm(EMPTY_FORM);
@@ -171,6 +193,26 @@ export default function AdminEquipos() {
         </div>
       </div>
 
+      {/* Búsqueda */}
+      <div className="mb-4 flex items-center gap-3">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o abreviación..."
+          value={busqueda}
+          onChange={(e) => cambiarBusqueda(e.target.value)}
+          className="flex-1 max-w-sm border rounded-lg px-3 py-2 text-sm"
+        />
+        {busqueda && (
+          <button
+            onClick={() => cambiarBusqueda("")}
+            className="text-gray-400 hover:text-gray-700 text-lg leading-none"
+          >
+            ✕
+          </button>
+        )}
+        <span className="text-sm text-gray-500">{equiposFiltrados.length} equipo(s)</span>
+      </div>
+
       {/* Lista */}
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
@@ -184,14 +226,14 @@ export default function AdminEquipos() {
             </tr>
           </thead>
           <tbody>
-            {equipos.length === 0 ? (
+            {equiposPagina.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-4 text-gray-500 text-center">
-                  Sin equipos registrados. Crea el primero arriba.
+                  {busqueda ? "Sin resultados para esa búsqueda." : "Sin equipos registrados. Crea el primero arriba."}
                 </td>
               </tr>
             ) : (
-              equipos.map((eq) => (
+              equiposPagina.map((eq) => (
                 <tr key={eq.id} className="border-t border-gray-100">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
@@ -239,6 +281,29 @@ export default function AdminEquipos() {
             )}
           </tbody>
         </table>
+
+        {/* Paginación */}
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-2 p-3 border-t border-gray-100">
+            <button
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              disabled={paginaActual === 1}
+              className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-50"
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-gray-600">
+              Página {paginaActual} de {totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              disabled={paginaActual === totalPaginas}
+              className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-50"
+            >
+              Siguiente →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
