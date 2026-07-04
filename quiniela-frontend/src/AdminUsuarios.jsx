@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { API } from "./config/api";
+
+const PAGE_SIZE = 10;
 
 function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -14,6 +16,9 @@ function AdminUsuarios() {
   const [torneosUsuario, setTorneosUsuario] = useState({}); // { usuario_id: [torneos] }
   const [torneoParaAgregar, setTorneoParaAgregar] = useState({});
   const [mensajeTorneos, setMensajeTorneos] = useState({});
+
+  const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -214,6 +219,23 @@ function AdminUsuarios() {
     } catch (error) { console.error(error); alert("Error de conexión"); }
   };
 
+  const usuariosFiltrados = useMemo(() => {
+    if (!busqueda.trim()) return usuarios;
+    const q = busqueda.toLowerCase();
+    return usuarios.filter(
+      (u) => u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    );
+  }, [usuarios, busqueda]);
+
+  const totalPaginas = Math.max(1, Math.ceil(usuariosFiltrados.length / PAGE_SIZE));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const usuariosPagina = usuariosFiltrados.slice(
+    (paginaActual - 1) * PAGE_SIZE,
+    paginaActual * PAGE_SIZE
+  );
+
+  const cambiarBusqueda = (val) => { setBusqueda(val); setPagina(1); };
+
   // ── Render ────────────────────────────────────────────────────────────
   return (
     <div>
@@ -237,6 +259,21 @@ function AdminUsuarios() {
         </div>
       </div>
 
+      {/* Búsqueda */}
+      <div className="mb-4 flex items-center gap-3">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o email..."
+          value={busqueda}
+          onChange={(e) => cambiarBusqueda(e.target.value)}
+          className="flex-1 max-w-sm p-2 border border-gray-300 rounded text-sm"
+        />
+        {busqueda && (
+          <button onClick={() => cambiarBusqueda("")} className="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+        )}
+        <span className="text-sm text-gray-500">{usuariosFiltrados.length} usuario(s)</span>
+      </div>
+
       {/* Tabla usuarios */}
       {loading ? (
         <p className="text-gray-500">Cargando usuarios...</p>
@@ -252,7 +289,7 @@ function AdminUsuarios() {
             <div className="col-span-4">Acciones</div>
           </div>
 
-          {usuarios.map((u) => (
+          {usuariosPagina.map((u) => (
             <div key={u.id} className="border border-gray-200 rounded-lg overflow-hidden">
               {/* Fila principal */}
               <div className="grid grid-cols-12 gap-2 px-3 py-2.5 items-center text-sm">
@@ -378,8 +415,33 @@ function AdminUsuarios() {
             </div>
           ))}
 
-          {usuarios.length === 0 && (
-            <p className="text-gray-500 text-sm p-3">No hay usuarios registrados.</p>
+          {usuariosPagina.length === 0 && (
+            <p className="text-gray-500 text-sm p-3">
+              {busqueda ? "Sin resultados para esa búsqueda." : "No hay usuarios registrados."}
+            </p>
+          )}
+
+          {/* Paginación */}
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-3">
+              <button
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-100"
+              >
+                ← Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página {paginaActual} de {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual === totalPaginas}
+                className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-100"
+              >
+                Siguiente →
+              </button>
+            </div>
           )}
         </div>
       )}

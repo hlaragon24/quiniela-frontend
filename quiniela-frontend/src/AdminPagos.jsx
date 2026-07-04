@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API } from "./config/api";
+import { exportarCSV } from "./utils/exportCsv";
 
 function AdminPagos({ torneoId }) {
   const [torneoInfo, setTorneoInfo]           = useState(null);
@@ -143,6 +144,30 @@ function AdminPagos({ torneoId }) {
 
   const jornadaActual = jornadas.find((j) => j.id === jornadaId);
 
+  const exportarPagos = () => {
+    const datos = pagosFiltrados.map((pago) => {
+      const datos = editando[pago.usuario_id] || {};
+      return {
+        nombre: pago.nombre,
+        email: pago.email,
+        estado: datos.pagado ? "Pagado" : "Pendiente",
+        monto: datos.monto || 0,
+        metodo: datos.metodo_pago || "",
+        notas: datos.notas || "",
+        jornada: jornadaActual ? `J${jornadaActual.numero}` : "Temporada",
+      };
+    });
+    exportarCSV(datos, [
+      { key: "nombre",  label: "Jugador" },
+      { key: "email",   label: "Email" },
+      { key: "estado",  label: "Estado" },
+      { key: "monto",   label: "Monto" },
+      { key: "metodo",  label: "Método de pago" },
+      { key: "notas",   label: "Notas" },
+      { key: "jornada", label: "Jornada/Temporada" },
+    ], `pagos_${torneoInfo?.nombre ?? "torneo"}_${jornadaActual ? `J${jornadaActual.numero}` : "temporada"}`);
+  };
+
   /* ─── render ─── */
   if (!torneoInfo) return <p className="mt-4 text-gray-500">Cargando torneo...</p>;
 
@@ -151,6 +176,13 @@ function AdminPagos({ torneoId }) {
       {/* Encabezado con contexto */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <h2 className="text-xl font-bold">Control de Pagos 💵</h2>
+        <button
+          onClick={exportarPagos}
+          disabled={pagosFiltrados.length === 0}
+          className="ml-auto bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-semibold hover:bg-emerald-700 disabled:opacity-40"
+        >
+          ⬇ Exportar CSV
+        </button>
         <span className="px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
           {torneoInfo.nombre}
         </span>

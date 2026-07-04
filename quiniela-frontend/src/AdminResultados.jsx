@@ -12,8 +12,10 @@ import AdminEquipos from "./AdminEquipos";
 import TablaGeneral from "./TablaGeneral";
 import AdminReglamento from "./AdminReglamento";
 import AdminPronosticos from "./AdminPronosticos";
+import AdminAuditoria from "./AdminAuditoria";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
+import { exportarCSV } from "./utils/exportCsv";
 
 function AdminResultados({ onLogout }) {
     const [torneos, setTorneos] = useState([]);
@@ -149,6 +151,16 @@ function AdminResultados({ onLogout }) {
         }
     };
 
+    const exportarResultados = () => {
+        exportarCSV(partidos, [
+            { key: "local",      label: "Local" },
+            { key: "visitante",  label: "Visitante" },
+            { key: "goles_local",    label: "Goles local" },
+            { key: "goles_visitante", label: "Goles visitante" },
+            { key: "es_comodin", label: "Comodín" },
+        ], `resultados_jornada_${jornada}`);
+    };
+
     const guardarTodosResultados = async () => {
         try {
             const promesas = Object.entries(marcadores).map(([partidoId, marcador]) =>
@@ -197,6 +209,7 @@ function AdminResultados({ onLogout }) {
         { id: "tabla", label: "Tabla 🏆" },
         { id: "reglamento", label: "Reglamento 📋" },
         { id: "pronosticos-admin", label: "Pronósticos 🎯" },
+        { id: "auditoria", label: "Auditoría 🕵️" },
     ];
 
     return (
@@ -207,6 +220,13 @@ function AdminResultados({ onLogout }) {
                 <TimerJornada jornada={jornada} torneoId={torneoId} />
 
                 <div className="flex gap-2.5">
+                    <button
+                        onClick={exportarResultados}
+                        disabled={partidos.length === 0}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-40"
+                    >
+                        ⬇ CSV
+                    </button>
                     <button
                         onClick={guardarTodosResultados}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700"
@@ -377,6 +397,7 @@ function AdminResultados({ onLogout }) {
             {tab === "tabla" && <TablaGeneral torneoId={torneoId} />}
             {tab === "reglamento" && <AdminReglamento torneoId={torneoId} />}
             {tab === "pronosticos-admin" && <AdminPronosticos torneoId={torneoId} />}
+            {tab === "auditoria" && <AdminAuditoria torneoId={torneoId} />}
 
             {mensaje && <p className="mt-4 text-sm font-medium">{mensaje}</p>}
         </div>

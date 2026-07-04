@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
+
+const PAGE_SIZE = 10;
 
 function AdminPartidos() {
     const [torneos, setTorneos] = useState([]);
@@ -15,6 +17,8 @@ function AdminPartidos() {
     const [comodin, setComodin] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
     const [mensaje, setMensaje] = useState("");
+    const [busqueda, setBusqueda] = useState("");
+    const [pagina, setPagina] = useState(1);
 
     const token = localStorage.getItem("token");
 
@@ -140,9 +144,25 @@ function AdminPartidos() {
         setEditandoId(null);
     };
 
-    const partidosFiltrados = partidos.filter(
-        (p) => Number(p.jornada_id) === Number(jornadaId)
+    const partidosFiltrados = useMemo(() => {
+        const porJornada = partidos.filter(
+            (p) => Number(p.jornada_id) === Number(jornadaId)
+        );
+        if (!busqueda.trim()) return porJornada;
+        const q = busqueda.toLowerCase();
+        return porJornada.filter(
+            (p) => p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q)
+        );
+    }, [partidos, jornadaId, busqueda]);
+
+    const totalPaginas = Math.max(1, Math.ceil(partidosFiltrados.length / PAGE_SIZE));
+    const paginaActual = Math.min(pagina, totalPaginas);
+    const partidosPagina = partidosFiltrados.slice(
+        (paginaActual - 1) * PAGE_SIZE,
+        paginaActual * PAGE_SIZE
     );
+
+    const cambiarBusqueda = (val) => { setBusqueda(val); setPagina(1); };
 
     return (
         <div>
@@ -238,6 +258,21 @@ function AdminPartidos() {
             {!jornadaId ? (
                 <p className="text-gray-500">Selecciona una jornada para ver sus partidos.</p>
             ) : (
+                <>
+                {/* Búsqueda */}
+                <div className="mb-3 flex items-center gap-3">
+                    <input
+                        type="text"
+                        placeholder="Buscar equipo..."
+                        value={busqueda}
+                        onChange={(e) => cambiarBusqueda(e.target.value)}
+                        className="p-2 border border-gray-300 rounded text-sm max-w-xs"
+                    />
+                    {busqueda && (
+                        <button onClick={() => cambiarBusqueda("")} className="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+                    )}
+                    <span className="text-sm text-gray-500">{partidosFiltrados.length} partido(s)</span>
+                </div>
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-gray-100">
@@ -249,14 +284,14 @@ function AdminPartidos() {
                     </thead>
 
                     <tbody>
-                        {partidosFiltrados.length === 0 ? (
+                        {partidosPagina.length === 0 ? (
                             <tr>
                                 <td colSpan="4" className="p-3 text-gray-500">
-                                    Sin partidos registrados en esta jornada.
+                                    {busqueda ? "Sin resultados para esa búsqueda." : "Sin partidos registrados en esta jornada."}
                                 </td>
                             </tr>
                         ) : (
-                            partidosFiltrados.map((p) => (
+                            partidosPagina.map((p) => (
                                 <tr key={p.id} className="border-b border-gray-100">
                                     <td className="p-2.5">
                                         <div className="flex items-center gap-2">
@@ -290,6 +325,30 @@ function AdminPartidos() {
                         )}
                     </tbody>
                 </table>
+
+                {/* Paginación */}
+                {totalPaginas > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-3">
+                        <button
+                            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                            disabled={paginaActual === 1}
+                            className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-100"
+                        >
+                            ← Anterior
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            Página {paginaActual} de {totalPaginas}
+                        </span>
+                        <button
+                            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                            disabled={paginaActual === totalPaginas}
+                            className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-100"
+                        >
+                            Siguiente →
+                        </button>
+                    </div>
+                )}
+                </>
             )}
         </div>
     );
