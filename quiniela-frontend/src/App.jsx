@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Dashboard from "./Dashboard";
 import TimerJornada from "./TimerJornada";
-import RankingHistorial from "./RankingHistorial";
+import HistorialJornadas from "./HistorialJornadas";
 import MisResultados from "./MisResultados";
 import TablaGeneral from "./TablaGeneral";
 import PerfilJugador from "./PerfilJugador";
@@ -317,7 +317,7 @@ function App({ onLogout }) {
   const NAV_ITEMS = [
     { value: "inicio",                icon: "🏠", label: "Inicio" },
     { value: "pronosticos",           icon: "⚽", label: "Pronósticos" },
-    { value: "historial",             icon: "📈", label: "Historial" },
+    { value: "historial",              icon: "📈", label: "Historial" },
     { value: "misResultados",         icon: "📋", label: "Mis pronósticos" },
     { value: "tabla-general",         icon: "🏆", label: "Tabla" },
     { value: "perfil",                icon: "👤", label: "Perfil" },
@@ -566,7 +566,7 @@ function App({ onLogout }) {
           </div>
         )}
 
-        {activeTab === "historial"             && <RankingHistorial torneoId={torneoId} />}
+        {activeTab === "historial"             && <HistorialJornadas torneoId={torneoId} />}
         {activeTab === "misResultados"         && <MisResultados torneoId={torneoId} />}
         {activeTab === "tabla-general"         && <TablaGeneral torneoId={torneoId} />}
         {activeTab === "perfil"                && <PerfilJugador torneoId={torneoId} />}
