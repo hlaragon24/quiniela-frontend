@@ -7,6 +7,10 @@ function AdminUsuarios() {
   const [loading, setLoading] = useState(false);
   const [creando, setCreando] = useState(false);
   const [expandido, setExpandido] = useState(null); // usuario_id expandido
+  const [editandoId, setEditandoId] = useState(null);
+  const [editNombre, setEditNombre] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [mensajeEdicion, setMensajeEdicion] = useState("");
   const [torneosUsuario, setTorneosUsuario] = useState({}); // { usuario_id: [torneos] }
   const [torneoParaAgregar, setTorneoParaAgregar] = useState({});
   const [mensajeTorneos, setMensajeTorneos] = useState({});
@@ -181,6 +185,19 @@ function AdminUsuarios() {
     } catch (error) { console.error(error); alert("Error de conexión"); }
   };
 
+  const guardarEdicion = async (id) => {
+    try {
+      const res = await fetch(`${API}/usuarios/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nombre: editNombre, email: editEmail }),
+      });
+      const data = await res.json();
+      setMensajeEdicion(res.ok ? `✅ ${data.mensaje}` : `❌ ${data.mensaje || "Error"}`);
+      if (res.ok) { setEditandoId(null); await cargarUsuarios(); }
+    } catch { setMensajeEdicion("❌ Error de conexión"); }
+  };
+
   const resetearPassword = async (id) => {
     const nuevaPassword = prompt("Nueva contraseña:");
     if (!nuevaPassword) return;
@@ -264,6 +281,12 @@ function AdminUsuarios() {
                   </button>
                   <button onClick={() => resetearPassword(u.id)} className="bg-orange-600 text-white px-2 py-1 rounded text-xs hover:bg-orange-700">Reset pwd</button>
                   <button
+                    onClick={() => { setEditandoId(u.id); setEditNombre(u.nombre); setEditEmail(u.email); setMensajeEdicion(""); }}
+                    className="bg-teal-600 text-white px-2 py-1 rounded text-xs hover:bg-teal-700"
+                  >
+                    ✏️ Editar
+                  </button>
+                  <button
                     onClick={() => toggleExpandido(u.id)}
                     className={`px-2 py-1 rounded text-xs font-semibold border ${expandido === u.id ? "bg-purple-600 text-white border-purple-600" : "border-purple-400 text-purple-600 hover:bg-purple-50"}`}
                   >
@@ -271,6 +294,28 @@ function AdminUsuarios() {
                   </button>
                 </div>
               </div>
+
+              {/* Panel de edición inline */}
+              {editandoId === u.id && (
+                <div className="border-t border-gray-200 bg-teal-50 px-4 py-3 flex flex-wrap gap-2 items-center">
+                  <input
+                    value={editNombre}
+                    onChange={(e) => setEditNombre(e.target.value)}
+                    placeholder="Nombre"
+                    className="p-1.5 border border-gray-300 rounded text-sm"
+                  />
+                  <input
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="Email"
+                    type="email"
+                    className="p-1.5 border border-gray-300 rounded text-sm"
+                  />
+                  <button onClick={() => guardarEdicion(u.id)} className="bg-teal-600 text-white px-3 py-1.5 rounded text-sm hover:bg-teal-700 font-semibold">Guardar</button>
+                  <button onClick={() => setEditandoId(null)} className="bg-gray-400 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-500">Cancelar</button>
+                  {mensajeEdicion && <span className="text-sm">{mensajeEdicion}</span>}
+                </div>
+              )}
 
               {/* Panel de torneos expandible */}
               {expandido === u.id && (

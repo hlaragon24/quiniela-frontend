@@ -6,6 +6,7 @@ import MisResultados from "./MisResultados";
 import TablaGeneral from "./TablaGeneral";
 import PerfilJugador from "./PerfilJugador";
 import HistoricoPronosticos from "./HistoricoPronosticos";
+import Reglamento from "./Reglamento";
 import { API, apiFetch } from "./config/api";
 import TeamShield from "./components/TeamShield";
 
@@ -320,6 +321,7 @@ function App({ onLogout }) {
     { value: "tabla-general",         icon: "🏆", label: "Tabla" },
     { value: "perfil",                icon: "👤", label: "Perfil" },
     { value: "historico-pronosticos", icon: "📚", label: "Pronósticos" },
+    { value: "reglamento", icon: "📋", label: "Reglamento" },
   ];
 
   if (torneos.length === 0 && torneoId === "") {
@@ -568,6 +570,7 @@ function App({ onLogout }) {
         {activeTab === "tabla-general"         && <TablaGeneral torneoId={torneoId} />}
         {activeTab === "perfil"                && <PerfilJugador />}
         {activeTab === "historico-pronosticos" && <HistoricoPronosticos torneoId={torneoId} />}
+        {activeTab === "reglamento" && <Reglamento torneoId={torneoId} />}
       </div>
 
       {/* ── BOTÓN FLOTANTE GUARDAR ── */}

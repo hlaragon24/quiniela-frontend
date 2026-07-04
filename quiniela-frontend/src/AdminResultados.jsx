@@ -9,6 +9,9 @@ import HistoricoPronosticos from "./HistoricoPronosticos";
 import AdminPagos from "./AdminPagos";
 import AdminTorneos from "./AdminTorneos";
 import AdminEquipos from "./AdminEquipos";
+import TablaGeneral from "./TablaGeneral";
+import AdminReglamento from "./AdminReglamento";
+import AdminPronosticos from "./AdminPronosticos";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
 
@@ -191,6 +194,9 @@ function AdminResultados({ onLogout }) {
         { id: "historico", label: "Histórico 📚" },
         { id: "pagos", label: "Pagos 💰" },
         { id: "equipos", label: "Equipos 🛡️" },
+        { id: "tabla", label: "Tabla 🏆" },
+        { id: "reglamento", label: "Reglamento 📋" },
+        { id: "pronosticos-admin", label: "Pronósticos 🎯" },
     ];
 
     return (
@@ -198,7 +204,7 @@ function AdminResultados({ onLogout }) {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Panel Admin ⚙️</h1>
 
-                <TimerJornada jornada={jornada} />
+                <TimerJornada jornada={jornada} torneoId={torneoId} />
 
                 <div className="flex gap-2.5">
                     <button
@@ -368,6 +374,9 @@ function AdminResultados({ onLogout }) {
             {tab === "historico" && <HistoricoPronosticos torneoId={torneoId} />}
             {tab === "pagos" && <AdminPagos torneoId={torneoId} />}
             {tab === "equipos" && <AdminEquipos />}
+            {tab === "tabla" && <TablaGeneral torneoId={torneoId} />}
+            {tab === "reglamento" && <AdminReglamento torneoId={torneoId} />}
+            {tab === "pronosticos-admin" && <AdminPronosticos torneoId={torneoId} />}
 
             {mensaje && <p className="mt-4 text-sm font-medium">{mensaje}</p>}
         </div>

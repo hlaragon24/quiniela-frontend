@@ -43,6 +43,7 @@ function formatearDinero(valor) {
 function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario, torneoId }) {
     const [resumen, setResumen] = useState(null);
     const [ranking, setRanking] = useState([]);
+    const [bottom5, setBottom5] = useState([]);
     const [configCampeon, setConfigCampeon] = useState(null);
     const [campeonInput, setCampeonInput] = useState("");
     const [miCampeon, setMiCampeon] = useState(null);
@@ -86,7 +87,14 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
             const dataMiPago = await resMiPago.json();
 
             if (resResumen.ok) setResumen(dataResumen);
-            if (resRanking.ok && Array.isArray(dataRanking)) setRanking(dataRanking.slice(0, 5));
+            if (resRanking.ok && Array.isArray(dataRanking)) {
+                setRanking(dataRanking.slice(0, 5));
+                if (dataRanking.length > 5) {
+                    setBottom5(dataRanking.slice(-5).reverse());
+                } else {
+                    setBottom5([]);
+                }
+            }
 
             if (resMiCampeon.ok) {
                 const pronostico = dataMiCampeon.pronostico || null;
@@ -163,6 +171,7 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
         if (!torneoId) return;
         setResumen(null);
         setRanking([]);
+        setBottom5([]);
         setMiCampeon(null);
         setConfigCampeon(null);
         setMiPago(null);
@@ -430,6 +439,33 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                     )}
                 </CardContent>
             </Card>
+
+            {bottom5.length > 0 && (
+                <Card className="shadow-md border">
+                    <CardContent className="p-6">
+                        <h3 className="text-xl font-bold mb-4">📉 Top 5 con menos puntos</h3>
+                        <div className="space-y-3">
+                            {bottom5.map((jugador) => (
+                                <div
+                                    key={`bottom-${jugador.id}`}
+                                    className="flex justify-between items-center border rounded-lg px-4 py-3 bg-orange-50 border-orange-100"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-2xl">#{jugador.posicion}</span>
+                                        <div>
+                                            <div className="font-bold">{jugador.nombre}</div>
+                                            <div className="text-xs text-gray-500">
+                                                Pronóstico {jugador.puntos_pronostico} · Marcador {jugador.puntos_marcador} · Comodín {jugador.puntos_comodin}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="font-bold text-lg text-orange-700">{jugador.total} pts</div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

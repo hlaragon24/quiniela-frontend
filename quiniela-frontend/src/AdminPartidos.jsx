@@ -11,7 +11,6 @@ function AdminPartidos() {
 
     const [local, setLocal] = useState("");
     const [visitante, setVisitante] = useState("");
-    const [fecha, setFecha] = useState("");
     const [jornadaId, setJornadaId] = useState("");
     const [comodin, setComodin] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
@@ -54,7 +53,6 @@ function AdminPartidos() {
             });
             const data = await res.json();
             const lista = Array.isArray(data) ? data : [];
-            lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
             setPartidos(lista);
         } catch (error) {
             console.error("Error cargando partidos:", error);
@@ -91,7 +89,6 @@ function AdminPartidos() {
                 body: JSON.stringify({
                     local,
                     visitante,
-                    fecha,
                     jornada_id: Number(jornadaId),
                     es_comodin: comodin,
                 }),
@@ -112,7 +109,6 @@ function AdminPartidos() {
     const editarPartido = (p) => {
         setLocal(p.local);
         setVisitante(p.visitante);
-        setFecha(p.fecha?.slice(0, 16));
         setJornadaId(p.jornada_id);
         setComodin(p.es_comodin);
         setEditandoId(p.id);
@@ -140,7 +136,6 @@ function AdminPartidos() {
     const limpiarFormulario = () => {
         setLocal("");
         setVisitante("");
-        setFecha("");
         setComodin(false);
         setEditandoId(null);
     };
@@ -186,13 +181,6 @@ function AdminPartidos() {
                     placeholder="Equipo visitante"
                     value={visitante}
                     onChange={(e) => setVisitante(e.target.value)}
-                    className="p-2 rounded border border-gray-300"
-                />
-
-                <input
-                    type="datetime-local"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
                     className="p-2 rounded border border-gray-300"
                 />
 
@@ -255,7 +243,6 @@ function AdminPartidos() {
                         <tr className="bg-gray-100">
                             <th className="text-left p-3 border-b-2 border-gray-300">Local</th>
                             <th className="text-left p-3 border-b-2 border-gray-300">Visitante</th>
-                            <th className="text-left p-3 border-b-2 border-gray-300">Fecha</th>
                             <th className="text-center p-3 border-b-2 border-gray-300">⭐</th>
                             <th className="text-left p-3 border-b-2 border-gray-300">Acciones</th>
                         </tr>
@@ -264,7 +251,7 @@ function AdminPartidos() {
                     <tbody>
                         {partidosFiltrados.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="p-3 text-gray-500">
+                                <td colSpan="4" className="p-3 text-gray-500">
                                     Sin partidos registrados en esta jornada.
                                 </td>
                             </tr>
@@ -283,7 +270,6 @@ function AdminPartidos() {
                                             {p.visitante}
                                         </div>
                                     </td>
-                                    <td className="p-2.5">{new Date(p.fecha).toLocaleString()}</td>
                                     <td className="p-2.5 text-center">{p.es_comodin ? "⭐" : ""}</td>
                                     <td className="p-2.5 flex gap-1.5">
                                         <button
