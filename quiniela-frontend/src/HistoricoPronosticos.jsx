@@ -47,16 +47,22 @@ function HistoricoPronosticos({ torneoId }) {
     }, [datos]);
 
     const registros = useMemo(() => {
-        return datos.filter((item) => {
-            const cumpleJornada =
-                jornadaFiltro === "todos" ||
-                String(item.jornada_numero) === jornadaFiltro;
+        return datos
+            .filter((item) => {
+                const cumpleJornada =
+                    jornadaFiltro === "todos" ||
+                    String(item.jornada_numero) === jornadaFiltro;
 
-            const cumpleJugador =
-                jugadorFiltro === "todos" || item.jugador === jugadorFiltro;
+                const cumpleJugador =
+                    jugadorFiltro === "todos" || item.jugador === jugadorFiltro;
 
-            return cumpleJornada && cumpleJugador;
-        });
+                return cumpleJornada && cumpleJugador;
+            })
+            .sort((a, b) =>
+                Number(a.jornada_numero) - Number(b.jornada_numero) ||
+                a.partido_id - b.partido_id ||
+                a.jugador.localeCompare(b.jugador)
+            );
     }, [datos, jornadaFiltro, jugadorFiltro]);
 
     const obtenerResultadoTexto = (fila) => {
