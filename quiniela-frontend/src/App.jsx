@@ -197,7 +197,7 @@ function App({ onLogout }) {
 
   useEffect(() => {
     if (!torneoId) return;
-    const torneo = torneos.find((t) => t.id == torneoId);
+    const torneo = torneos.find((t) => t.id === Number(torneoId));
     const tipo   = torneo?.tipo ?? "temporada";
     setTorneoTipo(tipo);
     setJornadaNumero("");

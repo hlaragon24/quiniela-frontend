@@ -108,10 +108,10 @@ function AdminJornadas() {
 
   const cerrarJornada = async (num) => {
     try {
-      const res = await fetch(`${API}/jornadas/${num}`, {
-        method: "PUT",
+      const res = await fetch(`${API}/jornadas/${num}/cerrar`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fecha_cierre: new Date().toISOString(), torneo_id: torneoSeleccionado }),
+        body: JSON.stringify({ torneo_id: torneoSeleccionado }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
