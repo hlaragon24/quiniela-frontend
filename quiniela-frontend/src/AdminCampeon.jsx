@@ -11,8 +11,17 @@ function AdminCampeon({ torneoId }) {
 
   const token = localStorage.getItem("token");
 
+  useEffect(() => {
+    if (!mensaje) return;
+    const t = setTimeout(() => setMensaje(""), 5000);
+    return () => clearTimeout(t);
+  }, [mensaje]);
+
   const cargarConfig = async () => {
-    if (!torneoId) return;
+    if (!torneoId) {
+      setCargando(false);
+      return;
+    }
 
     try {
       setCargando(true);
@@ -181,7 +190,16 @@ function AdminCampeon({ torneoId }) {
       </Card>
 
       {mensaje && (
-        <div className="rounded-lg border px-4 py-3 bg-gray-50">{mensaje}</div>
+        <div
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl text-white text-sm font-semibold max-w-[85vw] w-max pointer-events-none ${
+            mensaje.startsWith("✅") ? "bg-green-600 shadow-green-900/50" :
+            mensaje.startsWith("❌") ? "bg-red-600 shadow-red-900/50" :
+            mensaje.startsWith("⚠")  ? "bg-amber-500 shadow-amber-900/50" :
+            "bg-gray-700 shadow-gray-900/50"
+          }`}
+        >
+          {mensaje}
+        </div>
       )}
     </div>
   );
