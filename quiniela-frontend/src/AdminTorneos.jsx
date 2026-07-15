@@ -7,6 +7,7 @@ function AdminTorneos({ onTorneoChange }) {
   const [temporada, setTemporada] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const [tipo, setTipo] = useState("temporada");
   const [modoEdicion, setModoEdicion] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [mensaje, setMensaje] = useState("");
@@ -48,6 +49,7 @@ function AdminTorneos({ onTorneoChange }) {
           temporada: temporada.trim() || null,
           fecha_inicio: fechaInicio || null,
           fecha_fin: fechaFin || null,
+          tipo,
         }),
       });
 
@@ -73,6 +75,7 @@ function AdminTorneos({ onTorneoChange }) {
     setTemporada(t.temporada || "");
     setFechaInicio(t.fecha_inicio ? t.fecha_inicio.slice(0, 10) : "");
     setFechaFin(t.fecha_fin ? t.fecha_fin.slice(0, 10) : "");
+    setTipo(t.tipo || "temporada");
     setEditandoId(t.id);
     setModoEdicion(true);
   };
@@ -117,6 +120,7 @@ function AdminTorneos({ onTorneoChange }) {
     setTemporada("");
     setFechaInicio("");
     setFechaFin("");
+    setTipo("temporada");
     setModoEdicion(false);
     setEditandoId(null);
   };
@@ -170,6 +174,18 @@ function AdminTorneos({ onTorneoChange }) {
               onChange={(e) => setFechaFin(e.target.value)}
               className="p-2 rounded border border-gray-300"
             />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500 font-medium">Tipo de inscripción</label>
+            <select
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className="p-2 rounded border border-gray-300"
+            >
+              <option value="temporada">Por temporada</option>
+              <option value="jornada">Por jornada</option>
+            </select>
           </div>
 
           <button
@@ -229,6 +245,9 @@ function AdminTorneos({ onTorneoChange }) {
                     t.activo ? "bg-blue-500" : "bg-red-400"
                   }`}>
                     {t.activo ? "⚡ Activo" : "Inactivo"}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700">
+                    {t.tipo === "jornada" ? "📅 Por jornada" : "📋 Por temporada"}
                   </span>
                 </div>
               </div>

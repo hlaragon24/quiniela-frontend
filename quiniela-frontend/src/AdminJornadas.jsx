@@ -14,6 +14,12 @@ function AdminJornadas() {
   const [reabrirNumero, setReabrirNumero] = useState(null);
   const [nuevaFechaCierre, setNuevaFechaCierre] = useState("");
 
+  const [expandedJornada, setExpandedJornada] = useState(null);
+  const [participantes, setParticipantes] = useState([]);
+  const [todosUsuarios, setTodosUsuarios] = useState([]);
+  const [usuarioAgregarId, setUsuarioAgregarId] = useState("");
+  const [mensajeParticipantes, setMensajeParticipantes] = useState("");
+
   const token = localStorage.getItem("token");
 
   const cargarTorneos = async () => {
@@ -156,6 +162,73 @@ function AdminJornadas() {
     setModoEdicion(false);
   };
 
+  // ── Participantes por jornada (solo torneos tipo='jornada') ───────────
+  const cargarParticipantes = async (jornadaId) => {
+    try {
+      const res = await fetch(`${API}/jornadas/${jornadaId}/participantes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) setParticipantes(data);
+    } catch (e) {
+      console.error("Error cargando participantes:", e);
+    }
+  };
+
+  const cargarTodosUsuarios = async () => {
+    if (todosUsuarios.length > 0) return;
+    try {
+      const res = await fetch(`${API}/usuarios`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) setTodosUsuarios(data);
+    } catch (e) {
+      console.error("Error cargando usuarios:", e);
+    }
+  };
+
+  const toggleParticipantes = async (jornada) => {
+    if (expandedJornada === jornada.id) {
+      setExpandedJornada(null);
+      return;
+    }
+    setExpandedJornada(jornada.id);
+    setMensajeParticipantes("");
+    setUsuarioAgregarId("");
+    await Promise.all([cargarParticipantes(jornada.id), cargarTodosUsuarios()]);
+  };
+
+  const asignarJugador = async (jornadaId) => {
+    if (!usuarioAgregarId) return;
+    try {
+      const res = await fetch(`${API}/jornadas/${jornadaId}/jugadores/${usuarioAgregarId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensajeParticipantes(res.ok ? `✅ ${data.mensaje || "Jugador agregado"}` : `❌ ${data.mensaje || "Error"}`);
+      setUsuarioAgregarId("");
+      if (res.ok) cargarParticipantes(jornadaId);
+    } catch (e) {
+      setMensajeParticipantes("❌ Error de conexión");
+    }
+  };
+
+  const removerJugador = async (jornadaId, usuarioId) => {
+    try {
+      const res = await fetch(`${API}/jornadas/${jornadaId}/jugadores/${usuarioId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensajeParticipantes(res.ok ? `✅ ${data.mensaje || "Jugador removido"}` : `❌ ${data.mensaje || "Error"}`);
+      if (res.ok) cargarParticipantes(jornadaId);
+    } catch (e) {
+      setMensajeParticipantes("❌ Error de conexión");
+    }
+  };
+
   const torneoActual = torneos.find((t) => t.id === Number(torneoSeleccionado));
 
   return (
@@ -267,6 +340,17 @@ function AdminJornadas() {
                     Editar
                   </button>
 
+                  {torneoActual?.tipo === "jornada" && (
+                    <button
+                      onClick={() => toggleParticipantes(j)}
+                      className={`px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors ${
+                        expandedJornada === j.id ? "bg-indigo-700" : "bg-indigo-500 hover:bg-indigo-600"
+                      }`}
+                    >
+                      👥 Participantes
+                    </button>
+                  )}
+
                   {bloqueada ? (
                     <button
                       onClick={() => {
@@ -295,6 +379,61 @@ function AdminJornadas() {
                   </button>
                 </div>
               </div>
+
+              {/* Panel participantes */}
+              {expandedJornada === j.id && (
+                <div className="px-4 pb-4 bg-indigo-50 border-t border-indigo-100">
+                  <h4 className="font-semibold text-indigo-800 mt-3 mb-2 text-sm">
+                    Participantes inscritos ({participantes.length})
+                  </h4>
+
+                  {mensajeParticipantes && (
+                    <p className="text-sm mb-2 font-medium text-gray-700">{mensajeParticipantes}</p>
+                  )}
+
+                  {/* Lista de inscritos */}
+                  {participantes.length === 0 ? (
+                    <p className="text-sm text-gray-500 mb-3">Sin participantes aún.</p>
+                  ) : (
+                    <ul className="mb-3 space-y-1">
+                      {participantes.map((u) => (
+                        <li key={u.id} className="flex items-center justify-between bg-white rounded px-3 py-1.5 border border-indigo-100">
+                          <span className="text-sm font-medium text-gray-800">{u.nombre}</span>
+                          <button
+                            onClick={() => removerJugador(j.id, u.id)}
+                            className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                          >
+                            Remover
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Agregar usuario */}
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={usuarioAgregarId}
+                      onChange={(e) => setUsuarioAgregarId(e.target.value)}
+                      className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm"
+                    >
+                      <option value="">— Seleccionar jugador —</option>
+                      {todosUsuarios
+                        .filter((u) => !participantes.some((p) => p.id === u.id))
+                        .map((u) => (
+                          <option key={u.id} value={u.id}>{u.nombre}</option>
+                        ))}
+                    </select>
+                    <button
+                      onClick={() => asignarJugador(j.id)}
+                      disabled={!usuarioAgregarId}
+                      className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40"
+                    >
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {reabrirNumero === j.numero && (
                 <div className="flex items-center gap-2 px-3 pb-3 bg-blue-50 border-t border-blue-100">

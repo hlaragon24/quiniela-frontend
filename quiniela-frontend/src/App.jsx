@@ -234,6 +234,42 @@ function App({ onLogout }) {
     cargarDatos();
   }, [jornadaNumero]);
 
+  // ── Inscripción por jornada ───────────────────────────────────────────
+  const inscritoEnJornada =
+    torneoTipo === "jornada" && jornadaId != null
+      ? jornadaId in misPagosJornada
+      : null;
+
+  const inscribirseEnJornada = async () => {
+    if (!jornadaId) return;
+    try {
+      const res = await apiFetch(`${API}/jornadas/${jornadaId}/inscribir`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensaje(res.ok ? `✅ ${data.mensaje || "Inscrito correctamente"}` : `❌ ${data.mensaje || "Error"}`);
+      if (res.ok) cargarMiPago(torneoId, torneoTipo);
+    } catch {
+      setMensaje("❌ Error de conexión");
+    }
+  };
+
+  const desinscribirseDeJornada = async () => {
+    if (!jornadaId) return;
+    try {
+      const res = await apiFetch(`${API}/jornadas/${jornadaId}/inscribir`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setMensaje(res.ok ? `✅ ${data.mensaje || "Inscripción cancelada"}` : `❌ ${data.mensaje || "Error"}`);
+      if (res.ok) cargarMiPago(torneoId, torneoTipo);
+    } catch {
+      setMensaje("❌ Error de conexión");
+    }
+  };
+
   // ── Acciones pronósticos ──────────────────────────────────────────────
   const actualizarMarcador = (partidoId, campo, valor) => {
     setMarcadoresUsuario((prev) => ({
@@ -451,6 +487,38 @@ function App({ onLogout }) {
         {/* PRONÓSTICOS */}
         {activeTab === "pronosticos" && (
           <div>
+            {/* Banner inscripción por jornada */}
+            {torneoTipo === "jornada" && jornadaId && (
+              <div className={`mb-4 px-4 py-3 rounded-xl border flex items-center justify-between gap-3 ${
+                inscritoEnJornada
+                  ? "bg-blue-50 border-blue-200"
+                  : "bg-orange-50 border-orange-300"
+              }`}>
+                <div>
+                  <p className={`font-semibold text-sm ${inscritoEnJornada ? "text-blue-700" : "text-orange-700"}`}>
+                    {inscritoEnJornada
+                      ? "✅ Estás inscrito en esta jornada"
+                      : "⚠️ No estás inscrito en esta jornada"}
+                  </p>
+                  {!inscritoEnJornada && (
+                    <p className="text-xs text-orange-600 mt-0.5">
+                      Inscríbete para poder enviar tus pronósticos.
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={inscritoEnJornada ? desinscribirseDeJornada : inscribirseEnJornada}
+                  className={`flex-shrink-0 text-sm font-bold px-4 py-2 rounded-xl transition-all active:scale-95 ${
+                    inscritoEnJornada
+                      ? "bg-red-100 text-red-600 hover:bg-red-200"
+                      : "bg-orange-500 text-white hover:bg-orange-600 shadow-md"
+                  }`}
+                >
+                  {inscritoEnJornada ? "Cancelar inscripción" : "Inscribirme"}
+                </button>
+              </div>
+            )}
+
             {(() => {
               const pagoTemporadaPendiente = torneoTipo === "temporada" && miPagoTemporada?.pagado === false;
               const pagoJornadaPendiente   = Boolean(jornadaId && misPagosJornada[jornadaId] === false);
