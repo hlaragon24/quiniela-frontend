@@ -236,6 +236,74 @@ function Reglamento({ torneoId }) {
         </ul>
       </Seccion>
 
+      {/* Distribución de premios */}
+      <Seccion titulo="Distribución de premios" icono="💰" color="green">
+        <div className="space-y-5">
+
+          {/* Torneo de temporada */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Torneo de temporada completa
+            </p>
+
+            {/* Desglose visual del pozo */}
+            <div className="rounded-xl overflow-hidden border border-green-200 mb-3">
+              <div className="bg-green-600 text-white text-xs font-bold px-3 py-1.5 uppercase tracking-wider">
+                Pozo total recaudado = 100%
+              </div>
+              <div className="divide-y divide-green-100">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
+                  <span className="text-sm text-gray-600">🏢 Administración</span>
+                  <span className="font-bold text-gray-700 bg-gray-200 px-2 py-0.5 rounded-full text-sm">15%</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-50">
+                  <span className="text-sm font-semibold text-yellow-800">🥇 1er lugar</span>
+                  <span className="font-bold text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-full text-sm">59.5% <span className="font-normal text-yellow-600 text-xs">(70% del 85%)</span></span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-2.5 bg-orange-50">
+                  <span className="text-sm font-semibold text-orange-800">🥈 2do lugar</span>
+                  <span className="font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full text-sm">25.5% <span className="font-normal text-orange-600 text-xs">(30% del 85%)</span></span>
+                </div>
+              </div>
+            </div>
+
+            <ul className="space-y-2 text-sm text-gray-700">
+              {[
+                <>El 15% del total recaudado se destina a la <strong>administración del torneo</strong>.</>,
+                <>El 85% restante se reparte entre los ganadores: <strong>70% para 1er lugar</strong> y <strong>30% para 2do lugar</strong>.</>,
+                <>Si dos o más jugadores <strong>empatan en 1er lugar</strong>: no habrá 2do lugar. El 85% completo se divide en partes iguales entre todos los empatados en primer lugar.</>,
+                <>Si dos o más jugadores <strong>empatan en 2do lugar</strong>: el 30% se divide en partes iguales entre todos los empatados en ese lugar.</>,
+              ].map((texto, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span>{texto}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Por jornada */}
+          <div className="border-t border-green-200 pt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Torneo por jornada
+            </p>
+            <ul className="space-y-2 text-sm text-gray-700">
+              {[
+                <>Cada jornada tiene una <strong>cuota fija</strong> establecida por el administrador.</>,
+                <>En torneos por jornada <strong>solo existe el 1er lugar</strong>. No hay 2do lugar.</>,
+                <>Si uno o varios jugadores empatan en el primer lugar, el <strong>premio de esa jornada se divide en partes iguales</strong> entre todos los empatados.</>,
+                <>El monto específico de cada jornada es comunicado por el administrador antes del inicio de la misma.</>,
+              ].map((texto, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span>{texto}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Seccion>
+
       {/* Conducta */}
       <Seccion titulo="Conducta y fair play" icono="🤝" color="blue">
         <ul className="space-y-2 text-sm text-gray-700">
