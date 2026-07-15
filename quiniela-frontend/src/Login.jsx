@@ -49,17 +49,67 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-500 via-emerald-700 to-[#0d1f3c] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+         style={{ background: "linear-gradient(160deg, #064e1a 0%, #0d7a2e 35%, #0a5c22 65%, #061b0d 100%)" }}>
+
+      {/* Campo de fútbol - decoración de fondo */}
+      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+        {/* Línea central */}
+        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] bg-white/10" />
+        {/* Círculo central */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border-[3px] border-white/10" />
+        {/* Punto central */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white/20" />
+        {/* Borde del campo */}
+        <div className="absolute inset-6 border-[3px] border-white/8 rounded" />
+        {/* Área grande derecha */}
+        <div className="absolute top-1/4 right-6 w-24 h-1/2 border-[3px] border-white/10 border-r-0" />
+        {/* Área grande izquierda */}
+        <div className="absolute top-1/4 left-6 w-24 h-1/2 border-[3px] border-white/10 border-l-0" />
+        {/* Balones decorativos */}
+        <div className="absolute top-8 left-8 text-7xl opacity-[0.07] -rotate-12 blur-[1px]">⚽</div>
+        <div className="absolute bottom-8 right-8 text-7xl opacity-[0.07] rotate-12 blur-[1px]">⚽</div>
+        <div className="absolute top-1/3 right-16 text-5xl opacity-[0.06] rotate-45">⚽</div>
+        <div className="absolute bottom-1/3 left-16 text-5xl opacity-[0.06] -rotate-45">⚽</div>
+        {/* Gradiente oscuro sobre el campo para dar profundidad */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
+
+        {/* Alineación 4-3-3 */}
+        {[
+          { id:  1, left: "7%",  top: "50%" },  // Portero
+          { id:  2, left: "23%", top: "10%" },  // Lateral izq
+          { id:  3, left: "25%", top: "34%" },  // Central izq
+          { id:  4, left: "25%", top: "66%" },  // Central der
+          { id:  5, left: "23%", top: "90%" },  // Lateral der
+          { id:  6, left: "41%", top: "20%" },  // Medio izq
+          { id:  7, left: "43%", top: "50%" },  // Medio centro
+          { id:  8, left: "41%", top: "80%" },  // Medio der
+          { id:  9, left: "63%", top: "16%" },  // Extremo izq
+          { id: 10, left: "66%", top: "50%" },  // Delantero centro
+          { id: 11, left: "63%", top: "84%" },  // Extremo der
+        ].map(({ id, left, top }) => (
+          <div
+            key={id}
+            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
+            style={{ left, top }}
+          >
+            <div className="w-6 h-6 rounded-full bg-white/25 border-2 border-white/50 flex items-center justify-center shadow-md">
+              <span className="text-white/80 text-[9px] font-black leading-none">{id}</span>
+            </div>
+            <div className="w-6 h-[13px] rounded-sm bg-white/15 border border-white/30" />
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 relative z-10">
 
         {/* Logo y título */}
         <div className="flex flex-col items-center mb-8">
           <img
             src="/logo.png"
             alt="Los Tercos"
-            className="h-20 w-auto object-contain mb-3 drop-shadow-md"
+            className="h-36 w-auto object-contain mb-4 drop-shadow-lg"
           />
-          <h1 className="text-2xl font-bold text-gray-900">Los Tercos</h1>
           <p className="text-sm text-gray-500 mt-1">Quiniela de fútbol</p>
         </div>
 
@@ -130,3 +180,4 @@ function Login({ onLogin }) {
 }
 
 export default Login;
+

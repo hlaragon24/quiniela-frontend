@@ -39,6 +39,12 @@ function App({ onLogout }) {
 
   const handleCerrarJornada = useCallback(() => setJornadaAbierta(false), []);
 
+  useEffect(() => {
+    if (!mensaje) return;
+    const t = setTimeout(() => setMensaje(""), 5000);
+    return () => clearTimeout(t);
+  }, [mensaje]);
+
   // ── Torneos ──────────────────────────────────────────────────────────
   const cargarTorneos = async () => {
     try {
@@ -304,7 +310,6 @@ function App({ onLogout }) {
       }
 
       setMensaje(`✅ ${data.mensaje}`);
-      setTimeout(() => setMensaje(""), 5000);
       setRefreshRanking((prev) => !prev);
       if (jornadaId) await cargarPronosticosUsuario(jornadaId);
     } catch (error) {
@@ -349,7 +354,7 @@ function App({ onLogout }) {
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 py-2 flex items-center gap-3">
-          <img src="/logo.png" alt="Los Tercos" className="h-10 w-auto object-contain flex-shrink-0" />
+          <img src="/logo.png" alt="Los Tercos" className="h-14 w-auto object-contain flex-shrink-0" />
           <div className="flex-1" />
           {jornadaNumero && (
             <TimerJornada
@@ -406,7 +411,7 @@ function App({ onLogout }) {
       </div>
 
       {/* ── NAV PILLS ── */}
-      <div className="sticky top-[57px] z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <div className="sticky top-[73px] z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-5xl mx-auto overflow-x-auto scrollbar-hide">
           <div className="flex flex-nowrap gap-1 px-3 sm:px-5 py-2 w-max">
             {NAV_ITEMS.map((item) => (
@@ -481,10 +486,6 @@ function App({ onLogout }) {
                 : "🔒 Jornada cerrada — ya no es posible modificar pronósticos"}
             </div>
 
-            {mensaje && (
-              <p className="mb-4 text-sm font-medium text-gray-600">{mensaje}</p>
-            )}
-
             {partidos.length === 0 && (
               <p className="mt-8 text-center text-gray-500">No hay partidos configurados para esta jornada.</p>
             )}
@@ -495,8 +496,12 @@ function App({ onLogout }) {
                 return (
                   <div
                     key={`partido-${partido.id}`}
-                    className={`bg-white rounded-2xl p-4 border shadow-md transition-all ${
-                      incompleto ? "border-red-400 shadow-red-200/50" : "border-gray-100"
+                    className={`rounded-2xl p-4 border shadow-md transition-all ${
+                      incompleto
+                        ? "bg-white border-red-400 shadow-red-200/50"
+                        : partido.es_comodin
+                        ? "bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 border-amber-400 shadow-amber-200/60"
+                        : "bg-white border-gray-100"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -520,9 +525,11 @@ function App({ onLogout }) {
                     </div>
 
                     {partido.es_comodin && (
-                      <p className="text-center text-amber-600 text-xs font-bold mt-2 tracking-wide uppercase">
-                        ⭐ Partido comodín
-                      </p>
+                      <div className="flex justify-center mt-3 mb-1">
+                        <span className="inline-flex items-center gap-1.5 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full tracking-wide uppercase shadow-sm">
+                          ⭐ Partido comodín · puntos dobles
+                        </span>
+                      </div>
                     )}
 
                     <div className="flex justify-center items-center gap-3 mt-4">
@@ -578,6 +585,21 @@ function App({ onLogout }) {
         {activeTab === "historico-pronosticos" && <HistoricoPronosticos torneoId={torneoId} />}
         {activeTab === "reglamento" && <Reglamento torneoId={torneoId} />}
       </div>
+
+      {/* ── TOAST NOTIFICACIÓN ── */}
+      {mensaje && (
+        <div
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl text-white text-sm font-semibold max-w-[85vw] w-max pointer-events-none ${
+            mensaje.startsWith("✅") ? "bg-green-600 shadow-green-900/50" :
+            mensaje.startsWith("❌") ? "bg-red-600 shadow-red-900/50" :
+            mensaje.startsWith("⚠")  ? "bg-amber-500 shadow-amber-900/50" :
+            mensaje.startsWith("🔒") ? "bg-slate-700 shadow-slate-900/50" :
+            "bg-gray-700 shadow-gray-900/50"
+          }`}
+        >
+          {mensaje}
+        </div>
+      )}
 
       {/* ── BOTÓN FLOTANTE GUARDAR ── */}
       {activeTab === "pronosticos" && jornadaAbierta && (
