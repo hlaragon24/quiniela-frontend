@@ -15,6 +15,7 @@ import AdminPronosticos from "./AdminPronosticos";
 import AdminAuditoria from "./AdminAuditoria";
 import AdminImportar from "./AdminImportar";
 import AdminParticipacion from "./AdminParticipacion";
+import AdminOrganizadores from "./AdminOrganizadores";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
@@ -200,6 +201,7 @@ function AdminResultados({ onLogout }) {
 
     const tabs = [
         { id: "torneos", label: "Torneos 🏆" },
+        { id: "organizadores", label: "Organizadores 🔑" },
         { id: "resultados", label: "Resultados" },
         { id: "jornadas", label: "Jornadas" },
         { id: "partidos", label: "Partidos" },
@@ -384,6 +386,9 @@ function AdminResultados({ onLogout }) {
 
             {tab === "torneos" && (
                 <AdminTorneos onTorneoChange={cargarTorneos} />
+            )}
+            {tab === "organizadores" && (
+                <AdminOrganizadores torneos={torneos} token={token} />
             )}
 
             {tab === "jornadas" && (

@@ -250,6 +250,7 @@ function AdminUsuarios() {
           <input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="p-2 border border-gray-300 rounded" />
           <select value={rol} onChange={(e) => setRol(e.target.value)} className="p-2 border border-gray-300 rounded">
             <option value="jugador">Jugador</option>
+            <option value="organizer">Organizador</option>
             <option value="admin">Admin</option>
           </select>
           <button onClick={crearUsuario} disabled={creando} className={`bg-green-600 text-white px-3 py-2 rounded font-semibold hover:bg-green-700 ${creando ? "opacity-60 cursor-not-allowed" : ""}`}>

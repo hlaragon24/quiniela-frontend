@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import Login from "./Login";
 import App from "./App";
 import AdminResultados from "./AdminResultados";
+import AdminOrganizador from "./AdminOrganizador";
 
 import { useState } from "react";
 import { setOnUnauthorized } from "./config/api";
@@ -53,6 +54,10 @@ function Root() {
 
 if (esAdmin) {
   return <AdminResultados onLogout={cerrarSesion} />;
+}
+
+if (payload.rol === "organizer") {
+  return <AdminOrganizador onLogout={cerrarSesion} />;
 }
 
 
