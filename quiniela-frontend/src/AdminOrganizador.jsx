@@ -3,6 +3,7 @@ import TimerJornada from "./TimerJornada";
 import AdminPronosticos from "./AdminPronosticos";
 import AdminParticipacion from "./AdminParticipacion";
 import AdminOrganizadorJugadores from "./AdminOrganizadorJugadores";
+import AdminEvidencia from "./AdminEvidencia";
 import TeamShield from "./components/TeamShield";
 import { API } from "./config/api";
 
@@ -108,10 +109,11 @@ function AdminOrganizador({ onLogout }) {
   const torneoActual = torneos.find(t => t.id === Number(torneoId));
 
   const tabs = [
-    { id: "resultados",   label: "Resultados ⚽" },
-    { id: "pronosticos",  label: "Pronósticos 🎯" },
+    { id: "resultados",    label: "Resultados ⚽" },
+    { id: "pronosticos",   label: "Pronósticos 🎯" },
     { id: "participacion", label: "Participación 📊" },
-    { id: "jugadores",    label: "Jugadores 👥" },
+    { id: "evidencia",     label: "Evidencia 📸" },
+    { id: "jugadores",     label: "Jugadores 👥" },
   ];
 
   return (
@@ -140,7 +142,7 @@ function AdminOrganizador({ onLogout }) {
             </select>
           </div>
         )}
-        {tab !== "jugadores" && (
+        {tab !== "jugadores" && tab !== "evidencia" && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-green-600 font-bold uppercase tracking-widest">Jornada</span>
             <select value={jornada} onChange={e => setJornada(e.target.value)}
@@ -226,6 +228,7 @@ function AdminOrganizador({ onLogout }) {
 
         {tab === "pronosticos" && jornadaId && <AdminPronosticos torneoId={torneoId} />}
         {tab === "participacion" && <AdminParticipacion torneoId={torneoId} />}
+        {tab === "evidencia" && <AdminEvidencia torneoId={torneoId} />}
         {tab === "jugadores" && <AdminOrganizadorJugadores torneoId={Number(torneoId)} />}
       </div>
     </div>
