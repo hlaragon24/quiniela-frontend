@@ -3,6 +3,7 @@ import { API } from "./config/api";
 
 function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
   const [tiempoRestante, setTiempoRestante] = useState("Cargando...");
+  const [fechaCierreStr, setFechaCierreStr] = useState("");
   const [colorClase, setColorClase] = useState(
     "bg-green-100 text-green-700 border-green-300"
   );
@@ -14,6 +15,7 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
 
     if (!jornada) {
       setTiempoRestante("Sin jornada");
+      setFechaCierreStr("");
       return undefined;
     }
 
@@ -23,12 +25,12 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
     const iniciarTimer = async () => {
       try {
         setTiempoRestante("Cargando...");
+        setFechaCierreStr("");
 
         const qs = torneoId ? `?torneo_id=${torneoId}` : "";
         const response = await fetch(`${API}/jornadas/${jornada}${qs}`);
 
         if (!response.ok) {
-          console.warn("Jornada no encontrada:", jornada);
           setTiempoRestante("Sin fecha configurada");
           return;
         }
@@ -36,7 +38,6 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
         const data = await response.json();
 
         if (!data?.fecha_cierre) {
-          console.warn("fecha_cierre no existe");
           setTiempoRestante("Sin fecha configurada");
           return;
         }
@@ -44,10 +45,18 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
         const fechaCierre = new Date(data.fecha_cierre);
 
         if (Number.isNaN(fechaCierre.getTime())) {
-          console.warn("fecha_cierre inválida:", data.fecha_cierre);
           setTiempoRestante("Fecha inválida");
           return;
         }
+
+        setFechaCierreStr(
+          fechaCierre.toLocaleString("es-MX", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
 
         const actualizarTimer = () => {
           if (!componenteActivo) return;
@@ -56,7 +65,7 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
           const diferencia = fechaCierre.getTime() - ahora.getTime();
 
           if (diferencia <= 0 || data.estado !== "abierta") {
-            setTiempoRestante("🔒 Jornada cerrada");
+            setTiempoRestante("🔒 Cerrada");
             setColorClase("bg-red-100 text-red-700 border-red-300");
 
             if (onCerrarJornada && !hasClosed.current) {
@@ -81,7 +90,10 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
             setColorClase("bg-green-100 text-green-700 border-green-300");
           }
 
-          setTiempoRestante(`${dias}d ${horas}h ${minutos}m ${segundos}s`);
+          const partes = [];
+          if (dias > 0) partes.push(`${dias}d`);
+          partes.push(`${horas}h`, `${minutos}m`, `${segundos}s`);
+          setTiempoRestante(partes.join(" "));
         };
 
         actualizarTimer();
@@ -102,14 +114,14 @@ function TimerJornada({ jornada, torneoId, onCerrarJornada }) {
 
   return (
     <div
-      className={`
-        flex items-center gap-2 text-sm font-semibold
-        px-4 py-2 rounded-lg border shadow-sm
-        ${colorClase}
-      `}
+      className={`flex flex-col items-center px-3 py-1.5 rounded-lg border shadow-sm text-center ${colorClase}`}
     >
-      ⏱️ Cierre en:
-      <span>{tiempoRestante}</span>
+      {fechaCierreStr && (
+        <span className="text-[10px] font-medium opacity-70 leading-tight">
+          Cierra: {fechaCierreStr}
+        </span>
+      )}
+      <span className="text-sm font-bold leading-tight">⏱️ {tiempoRestante}</span>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import AdminReglamento from "./AdminReglamento";
 import AdminPronosticos from "./AdminPronosticos";
 import AdminAuditoria from "./AdminAuditoria";
 import AdminImportar from "./AdminImportar";
+import AdminParticipacion from "./AdminParticipacion";
 import { API } from "./config/api";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
@@ -210,6 +211,7 @@ function AdminResultados({ onLogout }) {
         { id: "tabla", label: "Tabla 🏆" },
         { id: "reglamento", label: "Reglamento 📋" },
         { id: "pronosticos-admin", label: "Pronósticos 🎯" },
+        { id: "participacion", label: "Participación 📊" },
         { id: "auditoria", label: "Auditoría 🕵️" },
         { id: "importar",  label: "Importar CSV 📥" },
     ];
@@ -399,6 +401,7 @@ function AdminResultados({ onLogout }) {
             {tab === "tabla" && <TablaGeneral torneoId={torneoId} />}
             {tab === "reglamento" && <AdminReglamento torneoId={torneoId} />}
             {tab === "pronosticos-admin" && <AdminPronosticos torneoId={torneoId} />}
+            {tab === "participacion" && <AdminParticipacion torneoId={torneoId} />}
             {tab === "auditoria" && <AdminAuditoria torneoId={torneoId} />}
             {tab === "importar"  && <AdminImportar />}
 

@@ -549,9 +549,20 @@ function App({ onLogout }) {
                 ? "bg-green-50 text-green-700 border-green-200"
                 : "bg-red-50 text-red-700 border-red-200"
             }`}>
-              {jornadaAbierta
-                ? "🟢 Jornada abierta — puedes editar tus pronósticos"
-                : "🔒 Jornada cerrada — ya no es posible modificar pronósticos"}
+              <p>
+                {jornadaAbierta
+                  ? "🟢 Jornada abierta — puedes editar tus pronósticos"
+                  : "🔒 Jornada cerrada — ya no es posible modificar pronósticos"}
+              </p>
+              {jornadaActual?.fecha_cierre && (
+                <p className="font-normal text-xs mt-0.5 opacity-75">
+                  {jornadaAbierta ? "Cierra" : "Cerró"}{": "}
+                  {new Date(jornadaActual.fecha_cierre).toLocaleString("es-MX", {
+                    weekday: "short", day: "numeric", month: "short",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                </p>
+              )}
             </div>
 
             {partidos.length === 0 && (
