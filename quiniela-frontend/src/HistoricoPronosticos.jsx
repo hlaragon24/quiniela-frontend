@@ -127,49 +127,76 @@ function HistoricoPronosticos({ torneoId }) {
                     {Object.entries(porJornada[jNum]).map(([partidoId, partido]) => (
                         <div key={partidoId} className="mb-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                             {/* Header del partido */}
-                            <div className={`px-4 py-2.5 flex items-center justify-between ${partido.es_comodin ? "bg-amber-50 border-b border-amber-100" : "bg-gray-50 border-b border-gray-200"}`}>
+                            <div className={`px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 ${partido.es_comodin ? "bg-amber-50 border-b border-amber-100" : "bg-gray-50 border-b border-gray-200"}`}>
                                 <span className="font-bold text-sm text-gray-800">
                                     {partido.local} vs {partido.visitante}
                                     {partido.es_comodin && <span className="ml-2 text-amber-600">⭐ comodín</span>}
                                 </span>
-                                <span className="text-sm font-semibold text-gray-600">
-                                    Resultado: <strong>{resultadoReal(partido)}</strong>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-500">
+                                    Resultado: <strong className="text-gray-700">{resultadoReal(partido)}</strong>
                                 </span>
                             </div>
 
-                            {/* Tabla de jugadores */}
+                            {/* Jugadores */}
                             {partido.jugadores.length === 0 ? (
                                 <p className="px-4 py-2 text-sm text-gray-400">Sin pronósticos registrados.</p>
                             ) : (
-                                <table className="w-full text-sm">
-                                    <thead className="bg-white">
-                                        <tr className="border-b border-gray-100">
-                                            <th className="p-2.5 text-left text-gray-600 font-semibold">Jugador</th>
-                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Resultado</th>
-                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Marcador</th>
-                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Puntos</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                <>
+                                    {/* ── MÓVIL: tarjetas ── */}
+                                    <div className="sm:hidden divide-y divide-gray-100">
                                         {partido.jugadores
                                             .sort((a, b) => a.jugador.localeCompare(b.jugador))
                                             .map((fila) => (
-                                            <tr
+                                            <div
                                                 key={`${fila.usuario_id}-${fila.partido_id}`}
-                                                className={`border-t border-gray-100 ${rowColor(fila)}`}
+                                                className={`px-3 py-2.5 ${rowColor(fila)}`}
                                             >
-                                                <td className="p-2.5 font-medium text-gray-800">{fila.jugador}</td>
-                                                <td className="p-2.5 text-center font-bold">{fila.pronostico_resultado}</td>
-                                                <td className="p-2.5 text-center">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-gray-800 text-sm truncate">{fila.jugador}</span>
+                                                    <span className="font-bold text-gray-700 text-sm ml-2 flex-shrink-0">
+                                                        {fila.puntos_calculados ?? "—"} pts
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                    <span className="font-bold text-gray-700">{fila.pronostico_resultado}</span>
+                                                    <span className="mx-1.5 text-gray-300">·</span>
                                                     {fila.pronostico_local} - {fila.pronostico_visitante}
-                                                </td>
-                                                <td className="p-2.5 text-center font-bold">
-                                                    {fila.puntos_calculados ?? "—"}
-                                                </td>
-                                            </tr>
+                                                </p>
+                                            </div>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </div>
+
+                                    {/* ── DESKTOP: tabla ── */}
+                                    <table className="hidden sm:table w-full text-sm">
+                                        <thead className="bg-white">
+                                            <tr className="border-b border-gray-100">
+                                                <th className="p-2.5 text-left text-gray-600 font-semibold">Jugador</th>
+                                                <th className="p-2.5 text-center text-gray-600 font-semibold">Resultado</th>
+                                                <th className="p-2.5 text-center text-gray-600 font-semibold">Marcador</th>
+                                                <th className="p-2.5 text-center text-gray-600 font-semibold">Puntos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {partido.jugadores
+                                                .sort((a, b) => a.jugador.localeCompare(b.jugador))
+                                                .map((fila) => (
+                                                <tr
+                                                    key={`${fila.usuario_id}-${fila.partido_id}`}
+                                                    className={`border-t border-gray-100 ${rowColor(fila)}`}
+                                                >
+                                                    <td className="p-2.5 font-medium text-gray-800">{fila.jugador}</td>
+                                                    <td className="p-2.5 text-center font-bold">{fila.pronostico_resultado}</td>
+                                                    <td className="p-2.5 text-center">
+                                                        {fila.pronostico_local} - {fila.pronostico_visitante}
+                                                    </td>
+                                                    <td className="p-2.5 text-center font-bold">
+                                                        {fila.puntos_calculados ?? "—"}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </>
                             )}
                         </div>
                     ))}
