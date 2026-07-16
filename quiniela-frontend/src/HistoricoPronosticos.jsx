@@ -11,20 +11,13 @@ function HistoricoPronosticos({ torneoId }) {
 
     const cargarHistorico = async () => {
         if (!torneoId) return;
-
         try {
             setCargando(true);
-
-            const url = `${API}/pronosticos/historico-general?torneo_id=${torneoId}`;
-            const res = await fetch(url, {
+            const res = await fetch(`${API}/pronosticos/historico-general?torneo_id=${torneoId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             const data = await res.json();
-
-            if (res.ok && Array.isArray(data)) {
-                setDatos(data);
-            }
+            if (res.ok && Array.isArray(data)) setDatos(data);
         } catch (error) {
             console.error("Error cargando histórico:", error);
         } finally {
@@ -32,57 +25,76 @@ function HistoricoPronosticos({ torneoId }) {
         }
     };
 
-    useEffect(() => {
-        cargarHistorico();
-    }, [torneoId]);
+    useEffect(() => { cargarHistorico(); }, [torneoId]);
 
-    const jornadas = useMemo(() => {
-        return [...new Set(datos.map((d) => d.jornada_numero))].sort(
-            (a, b) => Number(a) - Number(b)
-        );
-    }, [datos]);
+    const jornadas = useMemo(() =>
+        [...new Set(datos.map((d) => d.jornada_numero))].sort((a, b) => Number(a) - Number(b)),
+    [datos]);
 
-    const jugadores = useMemo(() => {
-        return [...new Set(datos.map((d) => d.jugador))].sort();
-    }, [datos]);
+    const jugadores = useMemo(() =>
+        [...new Set(datos.map((d) => d.jugador))].sort(),
+    [datos]);
 
-    const registros = useMemo(() => {
-        return datos
-            .filter((item) => {
-                const cumpleJornada =
-                    jornadaFiltro === "todos" ||
-                    String(item.jornada_numero) === jornadaFiltro;
+    const registrosFiltrados = useMemo(() =>
+        datos.filter((item) => {
+            const cumpleJornada = jornadaFiltro === "todos" || String(item.jornada_numero) === jornadaFiltro;
+            const cumpleJugador = jugadorFiltro === "todos" || item.jugador === jugadorFiltro;
+            return cumpleJornada && cumpleJugador;
+        }),
+    [datos, jornadaFiltro, jugadorFiltro]);
 
-                const cumpleJugador =
-                    jugadorFiltro === "todos" || item.jugador === jugadorFiltro;
+    // Agrupar por jornada → partido
+    const porJornada = useMemo(() => {
+        const acc = {};
+        registrosFiltrados.forEach((fila) => {
+            const jKey = fila.jornada_numero;
+            if (!acc[jKey]) acc[jKey] = {};
+            const pKey = fila.partido_id;
+            if (!acc[jKey][pKey]) {
+                acc[jKey][pKey] = {
+                    local: fila.local,
+                    visitante: fila.visitante,
+                    es_comodin: fila.es_comodin,
+                    goles_local: fila.goles_local,
+                    goles_visitante: fila.goles_visitante,
+                    jugadores: [],
+                };
+            }
+            acc[jKey][pKey].jugadores.push(fila);
+        });
+        return acc;
+    }, [registrosFiltrados]);
 
-                return cumpleJornada && cumpleJugador;
-            })
-            .sort((a, b) =>
-                Number(a.jornada_numero) - Number(b.jornada_numero) ||
-                a.partido_id - b.partido_id ||
-                a.jugador.localeCompare(b.jugador)
-            );
-    }, [datos, jornadaFiltro, jugadorFiltro]);
+    const jornadasOrdenadas = useMemo(() =>
+        Object.keys(porJornada).sort((a, b) => Number(a) - Number(b)),
+    [porJornada]);
 
-    const obtenerResultadoTexto = (fila) => {
-        if (fila.goles_local === null || fila.goles_visitante === null) return "-";
-        return `${fila.goles_local} - ${fila.goles_visitante}`;
+    const rowColor = (fila) => {
+        const sinResultado = fila.goles_local === null || fila.goles_visitante === null;
+        if (sinResultado) return "";
+        const exacto =
+            Number(fila.pronostico_local) === Number(fila.goles_local) &&
+            Number(fila.pronostico_visitante) === Number(fila.goles_visitante);
+        if (exacto) return "bg-green-50";
+        if (Number(fila.puntos_calculados) > 0) return "bg-yellow-50";
+        return "bg-red-50";
     };
 
-    if (cargando) {
-        return <div className="mt-5 text-gray-500">Cargando histórico...</div>;
-    }
+    const resultadoReal = (p) =>
+        p.goles_local !== null ? `${p.goles_local} - ${p.goles_visitante}` : "—";
+
+    if (cargando) return <div className="mt-5 text-gray-500">Cargando histórico...</div>;
 
     return (
         <div className="mt-5">
             <h2 className="text-xl font-bold mb-5">Histórico General de Pronósticos 📚</h2>
 
+            {/* Filtros */}
             <div className="flex flex-wrap gap-3 mb-5">
                 <select
                     value={jornadaFiltro}
                     onChange={(e) => setJornadaFiltro(e.target.value)}
-                    className="px-3 py-2 rounded border border-gray-300"
+                    className="px-3 py-2 rounded border border-gray-300 text-sm"
                 >
                     <option value="todos">Todas las jornadas</option>
                     {jornadas.map((j) => (
@@ -93,7 +105,7 @@ function HistoricoPronosticos({ torneoId }) {
                 <select
                     value={jugadorFiltro}
                     onChange={(e) => setJugadorFiltro(e.target.value)}
-                    className="px-3 py-2 rounded border border-gray-300"
+                    className="px-3 py-2 rounded border border-gray-300 text-sm"
                 >
                     <option value="todos">Todos los jugadores</option>
                     {jugadores.map((j) => (
@@ -102,67 +114,67 @@ function HistoricoPronosticos({ torneoId }) {
                 </select>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="bg-gray-100">
-                            <th className="text-center p-3 border-b-2 border-gray-300">Jornada</th>
-                            <th className="text-left p-3 border-b-2 border-gray-300">Jugador</th>
-                            <th className="text-left p-3 border-b-2 border-gray-300">Partido</th>
-                            <th className="text-center p-3 border-b-2 border-gray-300">Pronóstico L,E,V</th>
-                            <th className="text-center p-3 border-b-2 border-gray-300">Marcador</th>
-                            <th className="text-center p-3 border-b-2 border-gray-300">Resultado</th>
-                            <th className="text-center p-3 border-b-2 border-gray-300">Puntos</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {registros.map((fila) => {
-                            const sinResultado = fila.goles_local === null || fila.goles_visitante === null;
-                            const marcadorExacto = !sinResultado &&
-                                Number(fila.pronostico_local) === Number(fila.goles_local) &&
-                                Number(fila.pronostico_visitante) === Number(fila.goles_visitante);
-                            const acerto = !sinResultado && Number(fila.puntos_calculados) > 0;
-
-                            const rowBg = sinResultado
-                                ? "hover:bg-gray-50"
-                                : marcadorExacto
-                                    ? "bg-green-50"
-                                    : acerto
-                                        ? "bg-yellow-50"
-                                        : "bg-red-50";
-
-                            return (
-                            <tr
-                                key={`${fila.usuario_id}-${fila.partido_id}`}
-                                className={`border-b border-gray-200 ${rowBg}`}
-                            >
-                                <td className="text-center p-2.5">J{fila.jornada_numero}</td>
-                                <td className="p-2.5">{fila.jugador}</td>
-                                <td className="p-2.5">
-                                    {fila.local} vs {fila.visitante}
-                                    {fila.es_comodin && <span className="ml-1.5">⭐</span>}
-                                </td>
-                                <td className="text-center p-2.5">
-                                    <strong>{fila.pronostico_resultado}</strong>
-                                </td>
-                                <td className="text-center p-2.5">
-                                    {fila.pronostico_local} - {fila.pronostico_visitante}
-                                </td>
-                                <td className="text-center p-2.5">{obtenerResultadoTexto(fila)}</td>
-                                <td className="text-center p-2.5">
-                                    <strong>{fila.puntos_calculados}</strong>
-                                </td>
-                            </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            {registros.length === 0 && (
-                <p className="mt-5 text-gray-500">No hay registros para los filtros seleccionados.</p>
+            {jornadasOrdenadas.length === 0 && (
+                <p className="text-gray-500 text-sm">No hay registros para los filtros seleccionados.</p>
             )}
+
+            {jornadasOrdenadas.map((jNum) => (
+                <div key={jNum} className="mb-8">
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">
+                        Jornada {jNum}
+                    </h3>
+
+                    {Object.entries(porJornada[jNum]).map(([partidoId, partido]) => (
+                        <div key={partidoId} className="mb-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                            {/* Header del partido */}
+                            <div className={`px-4 py-2.5 flex items-center justify-between ${partido.es_comodin ? "bg-amber-50 border-b border-amber-100" : "bg-gray-50 border-b border-gray-200"}`}>
+                                <span className="font-bold text-sm text-gray-800">
+                                    {partido.local} vs {partido.visitante}
+                                    {partido.es_comodin && <span className="ml-2 text-amber-600">⭐ comodín</span>}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-600">
+                                    Resultado: <strong>{resultadoReal(partido)}</strong>
+                                </span>
+                            </div>
+
+                            {/* Tabla de jugadores */}
+                            {partido.jugadores.length === 0 ? (
+                                <p className="px-4 py-2 text-sm text-gray-400">Sin pronósticos registrados.</p>
+                            ) : (
+                                <table className="w-full text-sm">
+                                    <thead className="bg-white">
+                                        <tr className="border-b border-gray-100">
+                                            <th className="p-2.5 text-left text-gray-600 font-semibold">Jugador</th>
+                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Resultado</th>
+                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Marcador</th>
+                                            <th className="p-2.5 text-center text-gray-600 font-semibold">Puntos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {partido.jugadores
+                                            .sort((a, b) => a.jugador.localeCompare(b.jugador))
+                                            .map((fila) => (
+                                            <tr
+                                                key={`${fila.usuario_id}-${fila.partido_id}`}
+                                                className={`border-t border-gray-100 ${rowColor(fila)}`}
+                                            >
+                                                <td className="p-2.5 font-medium text-gray-800">{fila.jugador}</td>
+                                                <td className="p-2.5 text-center font-bold">{fila.pronostico_resultado}</td>
+                                                <td className="p-2.5 text-center">
+                                                    {fila.pronostico_local} - {fila.pronostico_visitante}
+                                                </td>
+                                                <td className="p-2.5 text-center font-bold">
+                                                    {fila.puntos_calculados ?? "—"}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ))}
         </div>
     );
 }
