@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
 import { Card, CardContent } from "@/components/ui/card";
+import EvolucionPosiciones from "./EvolucionPosiciones";
 
 function medalla(posicion) {
     if (Number(posicion) === 1) return "🥇";
@@ -479,6 +480,13 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                     </CardContent>
                 </Card>
             </div>
+
+            <Card className="shadow-md border">
+                <CardContent className="p-6">
+                    <h3 className="text-xl font-bold mb-4">📈 Evolución de posiciones</h3>
+                    <EvolucionPosiciones torneoId={torneoId} />
+                </CardContent>
+            </Card>
 
             <Card className="shadow-md border">
                 <CardContent className="p-6">
