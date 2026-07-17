@@ -44,10 +44,14 @@ function GridContent({ torneoNombre, jornadaNum, jornadaInfo, partidos, jugadore
             </p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="text-[10px] text-blue-300 opacity-70 uppercase tracking-wide">Captura</p>
             <p className="text-xs text-blue-100 font-semibold">{fmtFecha(horaCaptura)}</p>
           </div>
         </div>
+      </div>
+
+      {/* Leyenda */}
+      <div className="bg-indigo-50 border-b border-indigo-100 px-5 py-2 text-center">
+        <p className="text-indigo-700 font-bold text-sm tracking-wide">¡Suerte a todos! 🍀</p>
       </div>
 
       {/* Matrix */}
@@ -111,17 +115,11 @@ function GridContent({ torneoNombre, jornadaNum, jornadaInfo, partidos, jugadore
                             >
                               {pron.resultado}
                             </span>
-                            <span className="text-[10px] text-gray-400 leading-none">
+                            <span className="text-[11px] text-gray-600 font-semibold leading-none">
                               {pron.local}-{pron.visitante}
                             </span>
-                            {pron.puntos != null && (
-                              <span
-                                className={`text-[9px] font-bold leading-none ${
-                                  Number(pron.puntos) > 0
-                                    ? "text-green-600"
-                                    : "text-gray-300"
-                                }`}
-                              >
+                            {pron.puntos != null && Number(pron.puntos) > 0 && (
+                              <span className="text-[9px] font-bold leading-none text-green-600">
                                 {pron.puntos}pt
                               </span>
                             )}
