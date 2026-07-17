@@ -33,6 +33,7 @@ function AdminResultados({ onLogout }) {
     const [marcadores, setMarcadores] = useState({});
     const [mensaje, setMensaje] = useState("");
     const [refreshRanking, setRefreshRanking] = useState(false);
+    const [guardados, setGuardados] = useState({});
     const [tab, setTab] = useState("resultados");
 
     const token = localStorage.getItem("token");
@@ -94,16 +95,19 @@ function AdminResultados({ onLogout }) {
             setPartidos(lista);
 
             const resultadosExistentes = {};
+            const guardadosExistentes = {};
             lista.forEach((partido) => {
                 if (partido.goles_local !== null && partido.goles_visitante !== null) {
                     resultadosExistentes[partido.id] = {
-                        local: partido.goles_local,
-                        visitante: partido.goles_visitante,
+                        local: String(partido.goles_local),
+                        visitante: String(partido.goles_visitante),
                     };
+                    guardadosExistentes[partido.id] = true;
                 }
             });
 
             setMarcadores(resultadosExistentes);
+            setGuardados(guardadosExistentes);
         } catch (error) {
             console.error(error);
         }
@@ -130,8 +134,8 @@ function AdminResultados({ onLogout }) {
         try {
             const marcador = marcadores[partidoId];
 
-            if (!marcador) {
-                setMensaje("Ingresa el marcador primero");
+            if (!marcador || marcador.local === "" || marcador.local === undefined || marcador.visitante === "" || marcador.visitante === undefined) {
+                setMensaje("⚠️ Ingresa el marcador primero");
                 return;
             }
 
@@ -142,17 +146,22 @@ function AdminResultados({ onLogout }) {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    goles_local: marcador.local ?? 0,
-                    goles_visitante: marcador.visitante ?? 0,
+                    goles_local: Number(marcador.local),
+                    goles_visitante: Number(marcador.visitante),
                 }),
             });
 
             const data = await response.json();
-            setMensaje(data.mensaje);
+            if (response.ok) {
+                setGuardados((prev) => ({ ...prev, [partidoId]: true }));
+                setMensaje("✅ " + data.mensaje);
+            } else {
+                setMensaje("❌ " + (data.mensaje || "Error guardando"));
+            }
             setRefreshRanking((prev) => !prev);
         } catch (error) {
             console.error(error);
-            setMensaje("Error guardando resultado");
+            setMensaje("❌ Error guardando resultado");
         }
     };
 
@@ -167,36 +176,41 @@ function AdminResultados({ onLogout }) {
     };
 
     const guardarTodosResultados = async () => {
+        const entradas = Object.entries(marcadores).filter(
+            ([, m]) => m.local !== "" && m.local !== undefined && m.visitante !== "" && m.visitante !== undefined
+        );
+        if (entradas.length === 0) { setMensaje("⚠️ No hay marcadores para guardar"); return; }
         try {
-            const promesas = Object.entries(marcadores).map(([partidoId, marcador]) =>
-                fetch(`${API}/resultados/${partidoId}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        goles_local: marcador.local ?? 0,
-                        goles_visitante: marcador.visitante ?? 0,
-                    }),
-                })
+            await Promise.all(
+                entradas.map(([partidoId, marcador]) =>
+                    fetch(`${API}/resultados/${partidoId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({
+                            goles_local: Number(marcador.local),
+                            goles_visitante: Number(marcador.visitante),
+                        }),
+                    })
+                )
             );
-
-            await Promise.all(promesas);
-            setMensaje("Resultados guardados correctamente");
+            const nuevosGuardados = {};
+            entradas.forEach(([id]) => { nuevosGuardados[id] = true; });
+            setGuardados((prev) => ({ ...prev, ...nuevosGuardados }));
+            setMensaje("✅ Todos los resultados guardados");
             setRefreshRanking((prev) => !prev);
         } catch (error) {
             console.error(error);
-            setMensaje("Error guardando resultados");
+            setMensaje("❌ Error guardando resultados");
         }
     };
 
     const actualizarMarcador = (partidoId, equipo, valor) => {
+        setGuardados((prev) => ({ ...prev, [partidoId]: false }));
         setMarcadores((prev) => ({
             ...prev,
             [partidoId]: {
                 ...prev[partidoId],
-                [equipo]: Number(valor),
+                [equipo]: valor, // string — permite borrar el 0 y escribir otro valor
             },
         }));
     };
@@ -320,64 +334,84 @@ function AdminResultados({ onLogout }) {
 
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-100">
-                                <th className="text-left p-3 border-b-2 border-gray-300">Local</th>
-                                <th className="text-left p-3 border-b-2 border-gray-300">Visitante</th>
-                                <th className="text-left p-3 border-b-2 border-gray-300">Resultado</th>
-                                <th className="text-left p-3 border-b-2 border-gray-300">⭐</th>
-                                <th className="text-left p-3 border-b-2 border-gray-300">Estado</th>
-                                <th className="text-left p-3 border-b-2 border-gray-300">Acción</th>
+                            <tr className="bg-gray-50 border-b-2 border-gray-200">
+                                <th className="text-left p-3 text-gray-600 font-semibold">Local</th>
+                                <th className="text-left p-3 text-gray-600 font-semibold">Visitante</th>
+                                <th className="text-center p-3 text-gray-600 font-semibold">Marcador</th>
+                                <th className="text-center p-3 text-gray-600 font-semibold w-10">⭐</th>
+                                <th className="text-center p-3 text-gray-600 font-semibold">Estado</th>
+                                <th className="text-center p-3 text-gray-600 font-semibold">Acción</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {partidos.map((partido) => {
                                 const marcador = marcadores[partido.id] || {};
+                                const yaGuardado = guardados[partido.id];
+                                const tieneValor = marcador.local !== "" && marcador.local !== undefined;
 
                                 return (
                                     <tr
                                         key={partido.id}
-                                        className={`border-b border-gray-100 ${partido.es_comodin ? "bg-orange-50" : ""}`}
+                                        className={`border-b border-gray-100 transition-colors ${partido.es_comodin ? "bg-amber-50" : "hover:bg-gray-50"}`}
                                     >
                                         <td className="p-2.5 w-1/5">
                                             <div className="flex items-center gap-2">
                                                 <TeamShield nombre={partido.local} escudoUrl={partido.escudo_local} color={partido.color_local} size="sm" showName={false} />
-                                                {partido.local}
+                                                <span className="font-medium">{partido.local}</span>
                                             </div>
                                         </td>
                                         <td className="p-2.5 w-1/5">
                                             <div className="flex items-center gap-2">
                                                 <TeamShield nombre={partido.visitante} escudoUrl={partido.escudo_visitante} color={partido.color_visitante} size="sm" showName={false} />
-                                                {partido.visitante}
+                                                <span className="font-medium">{partido.visitante}</span>
                                             </div>
                                         </td>
                                         <td className="p-2.5">
-                                            <div className="flex gap-1.5 items-center">
+                                            <div className="flex gap-2 items-center justify-center">
                                                 <input
                                                     type="number"
+                                                    min="0"
                                                     value={marcador.local ?? ""}
-                                                    className="w-14 p-1.5 rounded border border-gray-300 text-center"
+                                                    className={`w-14 p-1.5 rounded-lg border text-center text-lg font-bold transition-colors ${yaGuardado ? "border-green-300 bg-green-50 text-green-800" : "border-gray-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-200"}`}
                                                     onChange={(e) => actualizarMarcador(partido.id, "local", e.target.value)}
                                                 />
-                                                <span>-</span>
+                                                <span className="text-gray-400 font-bold text-lg">—</span>
                                                 <input
                                                     type="number"
+                                                    min="0"
                                                     value={marcador.visitante ?? ""}
-                                                    className="w-14 p-1.5 rounded border border-gray-300 text-center"
+                                                    className={`w-14 p-1.5 rounded-lg border text-center text-lg font-bold transition-colors ${yaGuardado ? "border-green-300 bg-green-50 text-green-800" : "border-gray-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-200"}`}
                                                     onChange={(e) => actualizarMarcador(partido.id, "visitante", e.target.value)}
                                                 />
                                             </div>
                                         </td>
-                                        <td className="p-2.5 text-center">{partido.es_comodin && "⭐"}</td>
-                                        <td className="p-2.5">
-                                            {marcador.local !== undefined ? "✅ guardado" : "⚪ pendiente"}
+                                        <td className="p-2.5 text-center">{partido.es_comodin && <span className="text-lg">⭐</span>}</td>
+                                        <td className="p-2.5 text-center">
+                                            {yaGuardado ? (
+                                                <span className="inline-flex items-center gap-1 text-green-700 font-semibold text-sm bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
+                                                    ✅ Guardado
+                                                </span>
+                                            ) : tieneValor ? (
+                                                <span className="inline-flex items-center gap-1 text-amber-700 font-semibold text-sm bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                                                    ✏️ Sin guardar
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-gray-400 text-sm bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
+                                                    ⏳ Pendiente
+                                                </span>
+                                            )}
                                         </td>
-                                        <td className="p-2.5">
+                                        <td className="p-2.5 text-center">
                                             <button
                                                 onClick={() => registrarResultado(partido.id)}
-                                                className="bg-blue-600 text-white px-3.5 py-1.5 rounded font-semibold hover:bg-blue-700"
+                                                className={`px-4 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                                                    yaGuardado
+                                                        ? "bg-green-100 text-green-700 hover:bg-green-200 border border-green-300"
+                                                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                                                }`}
                                             >
-                                                Guardar
+                                                {yaGuardado ? "✓ Actualizar" : "💾 Guardar"}
                                             </button>
                                         </td>
                                     </tr>

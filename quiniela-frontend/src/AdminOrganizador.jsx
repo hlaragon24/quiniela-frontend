@@ -62,7 +62,7 @@ function AdminOrganizador({ onLogout }) {
       const golesExistentes = {};
       lista.forEach(p => {
         if (p.goles_local !== null && p.goles_visitante !== null) {
-          golesExistentes[p.id] = { local: p.goles_local, visitante: p.goles_visitante };
+          golesExistentes[p.id] = { local: String(p.goles_local), visitante: String(p.goles_visitante) };
         }
       });
       setMarcadores(golesExistentes);
@@ -74,7 +74,7 @@ function AdminOrganizador({ onLogout }) {
   useEffect(() => { cargarPartidos(); }, [jornada]);
 
   const actualizarMarcador = (partidoId, equipo, valor) => {
-    setMarcadores(prev => ({ ...prev, [partidoId]: { ...prev[partidoId], [equipo]: Number(valor) } }));
+    setMarcadores(prev => ({ ...prev, [partidoId]: { ...prev[partidoId], [equipo]: valor } }));
   };
 
   const registrarResultado = async (partidoId) => {
@@ -84,7 +84,7 @@ function AdminOrganizador({ onLogout }) {
       const res = await fetch(`${API}/resultados/${partidoId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ goles_local: marcador.local ?? 0, goles_visitante: marcador.visitante ?? 0 }),
+        body: JSON.stringify({ goles_local: Number(marcador.local ?? 0), goles_visitante: Number(marcador.visitante ?? 0) }),
       });
       const data = await res.json();
       setMensaje(res.ok ? `✅ ${data.mensaje}` : `❌ ${data.mensaje || "Error guardando"}`);
@@ -98,7 +98,7 @@ function AdminOrganizador({ onLogout }) {
           fetch(`${API}/resultados/${pid}`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ goles_local: m.local ?? 0, goles_visitante: m.visitante ?? 0 }),
+            body: JSON.stringify({ goles_local: Number(m.local ?? 0), goles_visitante: Number(m.visitante ?? 0) }),
           })
         )
       );
