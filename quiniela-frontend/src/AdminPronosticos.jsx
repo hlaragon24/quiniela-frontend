@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 
 function AdminPronosticos({ torneoId }) {
   const [jornadas, setJornadas] = useState([]);
@@ -17,7 +18,8 @@ function AdminPronosticos({ torneoId }) {
       .then((data) => {
         if (Array.isArray(data)) {
           setJornadas(data);
-          if (data.length > 0) setJornadaId(data[0].id);
+          const activa = jornadaActivaDeListado(data);
+          if (activa) setJornadaId(activa.id);
         }
       })
       .catch(console.error);

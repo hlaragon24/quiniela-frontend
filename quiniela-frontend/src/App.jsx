@@ -8,6 +8,7 @@ import PerfilJugador from "./PerfilJugador";
 import HistoricoPronosticos from "./HistoricoPronosticos";
 import Reglamento from "./Reglamento";
 import { API, apiFetch } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 
 function App({ onLogout }) {
@@ -106,7 +107,8 @@ function App({ onLogout }) {
 
       setListaJornadas(data);
 
-      if (data.length > 0) setJornadaNumero(String(data[0].numero));
+      const activa = jornadaActivaDeListado(data);
+      if (activa) setJornadaNumero(String(activa.numero));
     } catch (error) {
       console.error("Error cargando jornadas:", error);
       setListaJornadas([]);

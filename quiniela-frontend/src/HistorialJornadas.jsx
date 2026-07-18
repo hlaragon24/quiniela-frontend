@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 
 function medalla(pos) {
   if (pos === 0) return "🥇";
@@ -17,18 +18,6 @@ function cellColor(pts, max) {
   return "bg-red-100 text-red-700";
 }
 
-function jornadaActivaDeListado(jornadas) {
-  if (!jornadas?.length) return null;
-  // Prioridad 1: última jornada cerrada (mayor número)
-  const cerradas = jornadas.filter((j) => j.estado === "cerrada");
-  if (cerradas.length > 0)
-    return cerradas.reduce((max, j) => Number(j.numero) > Number(max.numero) ? j : max);
-  // Prioridad 2: jornada abierta
-  const abierta = jornadas.find((j) => j.estado === "abierta");
-  if (abierta) return abierta;
-  // Fallback: primera de la lista
-  return jornadas[0];
-}
 
 function HistorialJornadas({ torneoId }) {
   const [datos, setDatos]       = useState([]);

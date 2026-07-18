@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { API } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 
 function AdminParticipacion({ torneoId }) {
   const [jornadas, setJornadas] = useState([]);
@@ -15,7 +16,8 @@ function AdminParticipacion({ torneoId }) {
       .then((data) => {
         if (Array.isArray(data)) {
           setJornadas(data);
-          if (data.length > 0) setJornadaId(data[0].id);
+          const activa = jornadaActivaDeListado(data);
+          if (activa) setJornadaId(activa.id);
         }
       })
       .catch(console.error);

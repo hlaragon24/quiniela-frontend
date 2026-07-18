@@ -6,6 +6,7 @@ import AdminOrganizadorJugadores from "./AdminOrganizadorJugadores";
 import AdminEvidencia from "./AdminEvidencia";
 import TeamShield from "./components/TeamShield";
 import { API } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 
 function AdminOrganizador({ onLogout }) {
   const [torneos, setTorneos] = useState([]);
@@ -41,7 +42,8 @@ function AdminOrganizador({ onLogout }) {
       const data = await res.json();
       if (res.ok && Array.isArray(data)) {
         setJornadas(data);
-        if (data.length > 0) setJornada(data[0].numero);
+        const activa = jornadaActivaDeListado(data);
+        if (activa) setJornada(activa.numero);
       }
     } catch (e) { console.error(e); }
   };

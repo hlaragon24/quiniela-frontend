@@ -19,6 +19,7 @@ import AdminEvidencia from "./AdminEvidencia";
 import EvolucionPosiciones from "./EvolucionPosiciones";
 import AdminOrganizadores from "./AdminOrganizadores";
 import { API, apiFetch } from "./config/api";
+import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
 
@@ -69,7 +70,8 @@ function AdminResultados({ onLogout }) {
             }
 
             setJornadas(data);
-            if (data.length > 0) setJornada(data[0].numero);
+            const activa = jornadaActivaDeListado(data);
+            if (activa) setJornada(activa.numero);
         } catch (error) {
             console.error("Error cargando jornadas:", error);
         }
