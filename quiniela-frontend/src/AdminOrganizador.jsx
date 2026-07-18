@@ -120,7 +120,7 @@ function AdminOrganizador({ onLogout }) {
     <div className="min-h-screen bg-[#eef3fb]">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-3 flex items-center gap-3">
-        <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
+        <img src="/Escudo_losTercos.png" alt="Logo" className="h-16 w-auto object-contain" />
         <div className="flex-1">
           <p className="text-xs text-gray-400">Panel Organizador</p>
           <p className="font-bold text-gray-800 text-sm">{torneoActual?.nombre || "Sin torneo"}</p>

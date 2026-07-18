@@ -385,7 +385,7 @@ function App({ onLogout }) {
   if (torneos.length === 0 && torneoId === "") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-8 bg-[#eef3fb]">
-        <img src="/logo.png" alt="Los Tercos" className="h-24 w-auto mb-6 object-contain" />
+        <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-32 w-auto mb-6 object-contain" />
         <h2 className="text-2xl font-bold mb-2 text-gray-900">Sin acceso a torneos</h2>
         <p className="text-gray-500 max-w-sm text-sm">
           No tienes ningún torneo asignado. Contacta al administrador para que te inscriba.
@@ -406,7 +406,7 @@ function App({ onLogout }) {
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 py-2 flex items-center gap-3">
-          <img src="/logo.png" alt="Los Tercos" className="h-14 w-auto object-contain flex-shrink-0" />
+          <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-16 w-auto object-contain flex-shrink-0" />
           <div className="flex-1" />
           {jornadaNumero && (
             <TimerJornada

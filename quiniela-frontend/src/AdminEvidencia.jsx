@@ -31,9 +31,9 @@ function GridContent({ torneoNombre, jornadaNum, jornadaInfo, partidos, jugadore
       <div className="bg-gradient-to-r from-blue-700 to-indigo-900 text-white px-5 py-4">
         <div className="flex items-center gap-3">
           <img
-            src="/logo.png"
+            src="/Escudo_losTercos.png"
             alt=""
-            className="h-10 w-auto object-contain opacity-90"
+            className="h-14 w-auto object-contain opacity-90"
             onError={(e) => { e.target.style.display = "none"; }}
           />
           <div className="flex-1 min-w-0">

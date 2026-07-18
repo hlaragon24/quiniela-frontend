@@ -114,9 +114,9 @@ function Login({ onLogin }) {
         {/* Logo y título */}
         <div className="flex flex-col items-center mb-8">
           <img
-            src="/logo.png"
+            src="/Escudo_losTercos.png"
             alt="Los Tercos"
-            className="h-36 w-auto object-contain mb-4 drop-shadow-lg"
+            className="h-44 w-auto object-contain mb-4 drop-shadow-lg"
           />
           {serverReady ? (
             <p className="text-sm text-gray-500 mt-1">Quiniela de fútbol</p>
