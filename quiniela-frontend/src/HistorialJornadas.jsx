@@ -17,11 +17,26 @@ function cellColor(pts, max) {
   return "bg-red-100 text-red-700";
 }
 
+function jornadaActivaDeListado(jornadas) {
+  const ahora = new Date();
+  const abierta = jornadas.find(
+    (j) => j.estado === "abierta" && j.fecha_cierre && new Date(j.fecha_cierre) > ahora
+  );
+  if (abierta) return abierta;
+  return jornadas.reduce((mas, j) => {
+    if (!j.fecha_cierre) return mas;
+    const d = Math.abs(new Date(j.fecha_cierre) - ahora);
+    const dMas = mas?.fecha_cierre ? Math.abs(new Date(mas.fecha_cierre) - ahora) : Infinity;
+    return d < dMas ? j : mas;
+  }, jornadas[0]);
+}
+
 function HistorialJornadas({ torneoId }) {
   const [datos, setDatos]       = useState([]);
   const [cargando, setCargando] = useState(false);
   const [vista, setVista]       = useState("jornada");
   const [jornadaSel, setJornadaSel] = useState(null);
+  const [jornadaActivaNum, setJornadaActivaNum] = useState(null);
 
   const miId    = Number(localStorage.getItem("usuario_id"));
   const token   = localStorage.getItem("token");
@@ -48,7 +63,18 @@ function HistorialJornadas({ torneoId }) {
     };
     setDatos([]);
     setJornadaSel(null);
+    setJornadaActivaNum(null);
     cargar();
+
+    // Fetch jornadas para saber cuál es la activa por fecha
+    fetch(`${API}/jornadas?torneo_id=${torneoId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d) && d.length > 0) {
+          setJornadaActivaNum(jornadaActivaDeListado(d).numero);
+        }
+      })
+      .catch(console.error);
   }, [torneoId]);
 
   // jornadas ordenadas: más reciente primero (para selector), más antigua primero (para tabla)
@@ -58,12 +84,25 @@ function HistorialJornadas({ torneoId }) {
   );
   const jornadasAsc = useMemo(() => [...jornadasDesc].reverse(), [jornadasDesc]);
 
-  // Seleccionar la más reciente cuando carga
+  // Seleccionar la jornada activa al cargar (o la más cercana si no está en los datos)
   useEffect(() => {
-    if (jornadasDesc.length > 0 && jornadaSel === null) {
+    if (jornadasDesc.length === 0 || jornadaSel !== null) return;
+    if (jornadaActivaNum !== null) {
+      const num = Number(jornadaActivaNum);
+      const enData = jornadasDesc.map(Number).includes(num);
+      if (enData) {
+        setJornadaSel(num);
+      } else {
+        // La más cercana al número activo que sí tenga datos
+        const closest = jornadasDesc.reduce((c, j) =>
+          Math.abs(Number(j) - num) < Math.abs(Number(c) - num) ? j : c
+        );
+        setJornadaSel(closest);
+      }
+    } else {
       setJornadaSel(jornadasDesc[0]);
     }
-  }, [jornadasDesc]);
+  }, [jornadasDesc, jornadaActivaNum]);
 
   // Ranking de la jornada seleccionada
   const rankingJornada = useMemo(() => {
