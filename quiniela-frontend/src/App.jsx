@@ -32,6 +32,8 @@ function App({ onLogout }) {
   const [miPagoTemporada, setMiPagoTemporada] = useState(null);   // {pagado} o null
   const [misPagosJornada, setMisPagosJornada] = useState({});     // { jornadaId: bool }
   const [activeTab, setActiveTab] = useState("inicio");
+  const [usuariosActivos, setUsuariosActivos] = useState([]);
+  const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -199,6 +201,20 @@ function App({ onLogout }) {
   // ── Effects ───────────────────────────────────────────────────────────
   useEffect(() => {
     cargarTorneos();
+  }, []);
+
+  useEffect(() => {
+    const fetchActivos = () => {
+      apiFetch(`${API}/usuarios/activos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((d) => { if (Array.isArray(d)) setUsuariosActivos(d); })
+        .catch(() => {});
+    };
+    fetchActivos();
+    const id = setInterval(fetchActivos, 30_000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -400,6 +416,38 @@ function App({ onLogout }) {
               onCerrarJornada={handleCerrarJornada}
             />
           )}
+
+          {/* Usuarios activos en tiempo real */}
+          {usuariosActivos.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-xl">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest hidden sm:block">En línea</span>
+              <div className="flex -space-x-2">
+                {usuariosActivos.map((u) => {
+                  const COLORS = ["bg-rose-500","bg-blue-500","bg-emerald-500","bg-amber-500","bg-purple-500","bg-pink-500","bg-cyan-500","bg-orange-500","bg-indigo-500","bg-teal-500"];
+                  const color = COLORS[u.id % COLORS.length];
+                  const selected = activoSeleccionado === u.id;
+                  return (
+                    <div key={u.id} className="relative">
+                      <button
+                        onClick={() => setActivoSeleccionado(selected ? null : u.id)}
+                        className={`w-7 h-7 rounded-full ${color} text-white text-[11px] font-bold flex items-center justify-center border-2 border-white shadow-sm hover:scale-110 transition-transform ${selected ? "ring-2 ring-offset-1 ring-gray-400" : ""}`}
+                      >
+                        {u.nombre.trim()[0].toUpperCase()}
+                      </button>
+                      {selected && (
+                        <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap z-50 shadow-xl">
+                          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-800 rotate-45 rounded-sm" />
+                          {u.nombre}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <span className="text-[11px] font-semibold text-green-600">{usuariosActivos.length}</span>
+            </div>
+          )}
+
           <button
             onClick={onLogout}
             className="flex-shrink-0 text-xs bg-red-600/70 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition-colors font-semibold"
