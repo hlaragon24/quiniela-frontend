@@ -406,7 +406,7 @@ function App({ onLogout }) {
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 py-2 flex items-center gap-3">
-          <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-16 w-auto object-contain flex-shrink-0" />
+          <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-28 w-auto object-contain flex-shrink-0" />
           <div className="flex-1" />
           {jornadaNumero && (
             <TimerJornada
