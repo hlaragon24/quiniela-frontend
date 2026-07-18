@@ -152,19 +152,16 @@ function GridContent({ torneoNombre, jornadaNum, jornadaInfo, partidos, jugadore
 }
 
 function jornadaActivaDeListado(jornadas) {
-  const ahora = new Date();
-  // Prioridad 1: jornada abierta cuyo cierre aún no pasó
-  const abierta = jornadas.find(
-    (j) => j.estado === "abierta" && j.fecha_cierre && new Date(j.fecha_cierre) > ahora
-  );
+  if (!jornadas?.length) return null;
+  // Prioridad 1: última jornada cerrada (mayor número)
+  const cerradas = jornadas.filter((j) => j.estado === "cerrada");
+  if (cerradas.length > 0)
+    return cerradas.reduce((max, j) => Number(j.numero) > Number(max.numero) ? j : max);
+  // Prioridad 2: jornada abierta
+  const abierta = jornadas.find((j) => j.estado === "abierta");
   if (abierta) return abierta;
-  // Prioridad 2: la más cercana a hoy (pasada o futura)
-  return jornadas.reduce((mas, j) => {
-    if (!j.fecha_cierre) return mas;
-    const d = Math.abs(new Date(j.fecha_cierre) - ahora);
-    const dMas = mas?.fecha_cierre ? Math.abs(new Date(mas.fecha_cierre) - ahora) : Infinity;
-    return d < dMas ? j : mas;
-  }, jornadas[0]);
+  // Fallback: primera de la lista
+  return jornadas[0];
 }
 
 function AdminEvidencia({ torneoId }) {
