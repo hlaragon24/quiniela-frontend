@@ -256,8 +256,8 @@ function AdminResultados({ onLogout }) {
         <div className="p-10">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                    <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-16 w-auto object-contain" />
-                    <h1 className="text-3xl font-bold">Panel Admin ⚙️</h1>
+                    <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-28 w-auto object-contain" />
+                    <h1 className="text-3xl font-bold">Panel Admin</h1>
                 </div>
 
                 <TimerJornada jornada={jornada} torneoId={torneoId} />
@@ -298,20 +298,6 @@ function AdminResultados({ onLogout }) {
                 </div>
 
                 <div className="flex gap-2.5">
-                    <button
-                        onClick={exportarResultados}
-                        disabled={partidos.length === 0}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-40"
-                    >
-                        ⬇ CSV
-                    </button>
-                    <button
-                        onClick={guardarTodosResultados}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700"
-                    >
-                        Guardar todos
-                    </button>
-
                     <button
                         onClick={onLogout}
                         className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
