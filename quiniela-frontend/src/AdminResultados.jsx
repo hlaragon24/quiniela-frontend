@@ -255,7 +255,10 @@ function AdminResultados({ onLogout }) {
     return (
         <div className="p-10">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Panel Admin ⚙️</h1>
+                <div className="flex items-center gap-3">
+                    <img src="/Escudo_losTercos.png" alt="Los Tercos" className="h-16 w-auto object-contain" />
+                    <h1 className="text-3xl font-bold">Panel Admin ⚙️</h1>
+                </div>
 
                 <TimerJornada jornada={jornada} torneoId={torneoId} />
 
