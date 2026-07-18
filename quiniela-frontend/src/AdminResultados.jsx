@@ -18,7 +18,7 @@ import AdminParticipacion from "./AdminParticipacion";
 import AdminEvidencia from "./AdminEvidencia";
 import EvolucionPosiciones from "./EvolucionPosiciones";
 import AdminOrganizadores from "./AdminOrganizadores";
-import { API } from "./config/api";
+import { API, apiFetch } from "./config/api";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
 
@@ -37,6 +37,8 @@ function AdminResultados({ onLogout }) {
     const [tab, setTab] = useState("resultados");
 
     const token = localStorage.getItem("token");
+    const [usuariosActivos, setUsuariosActivos] = useState([]);
+    const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 
     // ── Torneos ─────────────────────────────────────────────────────────
     const cargarTorneos = async () => {
@@ -116,6 +118,20 @@ function AdminResultados({ onLogout }) {
     // ── Effects ──────────────────────────────────────────────────────────
     useEffect(() => {
         cargarTorneos();
+    }, []);
+
+    useEffect(() => {
+        const fetchActivos = () => {
+            apiFetch(`${API}/usuarios/activos`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((r) => r.json())
+                .then((d) => { if (Array.isArray(d)) setUsuariosActivos(d); })
+                .catch(() => {});
+        };
+        fetchActivos();
+        const id = setInterval(fetchActivos, 30_000);
+        return () => clearInterval(id);
     }, []);
 
     useEffect(() => {
@@ -242,6 +258,41 @@ function AdminResultados({ onLogout }) {
                 <h1 className="text-3xl font-bold">Panel Admin ⚙️</h1>
 
                 <TimerJornada jornada={jornada} torneoId={torneoId} />
+
+                {/* Usuarios activos en tiempo real */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl">
+                    {usuariosActivos.length === 0 ? (
+                        <span className="text-xs text-gray-400">Sin usuarios en línea</span>
+                    ) : (
+                        <>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">En línea</span>
+                            <div className="flex -space-x-2">
+                                {usuariosActivos.map((u) => {
+                                    const COLORS = ["bg-rose-500","bg-blue-500","bg-emerald-500","bg-amber-500","bg-purple-500","bg-pink-500","bg-cyan-500","bg-orange-500","bg-indigo-500","bg-teal-500"];
+                                    const color = COLORS[u.id % COLORS.length];
+                                    const selected = activoSeleccionado === u.id;
+                                    return (
+                                        <div key={u.id} className="relative">
+                                            <button
+                                                onClick={() => setActivoSeleccionado(selected ? null : u.id)}
+                                                className={`w-8 h-8 rounded-full ${color} text-white text-xs font-bold flex items-center justify-center border-2 border-white shadow-sm hover:scale-110 transition-transform ${selected ? "ring-2 ring-offset-1 ring-gray-400" : ""}`}
+                                            >
+                                                {u.nombre.trim()[0].toUpperCase()}
+                                            </button>
+                                            {selected && (
+                                                <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap z-20 shadow-xl">
+                                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-800 rotate-45 rounded-sm" />
+                                                    {u.nombre}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <span className="text-[11px] font-semibold text-green-600">{usuariosActivos.length}</span>
+                        </>
+                    )}
+                </div>
 
                 <div className="flex gap-2.5">
                     <button

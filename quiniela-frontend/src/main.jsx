@@ -8,6 +8,7 @@ import AdminOrganizador from "./AdminOrganizador";
 
 import { useState, useEffect, useCallback } from "react";
 import { setOnUnauthorized } from "./config/api";
+import { API } from "./config/api";
 
 import "./index.css";
 
@@ -26,6 +27,22 @@ function Root() {
   }, []);
 
   setOnUnauthorized(cerrarSesion);
+
+  // Ping al backend cada 2 min para registrar presencia (activos en tiempo real)
+  useEffect(() => {
+    if (!sesionActiva) return;
+    const ping = () => {
+      const t = localStorage.getItem("token");
+      if (!t) return;
+      fetch(`${API}/usuarios/ping`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${t}` },
+      }).catch(() => {});
+    };
+    ping();
+    const id = setInterval(ping, 2 * 60_000);
+    return () => clearInterval(id);
+  }, [sesionActiva]);
 
   useEffect(() => {
     const checkExpiry = () => {
