@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { API } from "./config/api";
 
+function MiniEscudo({ nombre = "", escudoUrl, color }) {
+    const [err, setErr] = useState(false);
+    const initials = nombre.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+    return escudoUrl && !err ? (
+        <img src={escudoUrl} alt={nombre} className="w-6 h-6 object-contain flex-shrink-0" onError={() => setErr(true)} />
+    ) : (
+        <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+            style={{ backgroundColor: color || "#6B7280" }}
+        >
+            {initials}
+        </div>
+    );
+}
+
 function HistoricoPronosticos({ torneoId }) {
     const [datos, setDatos] = useState([]);
     const [jornadaFiltro, setJornadaFiltro] = useState("todos");
@@ -57,6 +72,10 @@ function HistoricoPronosticos({ torneoId }) {
                     es_comodin: fila.es_comodin,
                     goles_local: fila.goles_local,
                     goles_visitante: fila.goles_visitante,
+                    escudo_local: fila.escudo_local,
+                    color_local: fila.color_local,
+                    escudo_visitante: fila.escudo_visitante,
+                    color_visitante: fila.color_visitante,
                     jugadores: [],
                 };
             }
@@ -103,7 +122,7 @@ function HistoricoPronosticos({ torneoId }) {
     if (cargando) return <div className="mt-5 text-gray-500">Cargando histórico...</div>;
 
     return (
-        <div className="mt-5">
+        <div className="mt-5 max-w-4xl mx-auto">
             <h2 className="text-xl font-bold mb-5">Histórico General de Pronósticos 📚</h2>
 
             {/* Filtros */}
@@ -169,15 +188,25 @@ function HistoricoPronosticos({ torneoId }) {
                                     </span>
 
                                     {/* Nombre del partido — centrado y más grande */}
-                                    <div className="flex-1 text-center">
-                                        <span className="font-extrabold text-base sm:text-lg text-gray-800 tracking-tight">
+                                    <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
+                                        <MiniEscudo
+                                            nombre={partido.local}
+                                            escudoUrl={partido.escudo_local}
+                                            color={partido.color_local}
+                                        />
+                                        <span className="font-extrabold text-base sm:text-lg text-gray-800 tracking-tight text-center leading-tight">
                                             {partido.local}
-                                            <span className="text-gray-400 font-medium mx-2">vs</span>
+                                            <span className="text-gray-400 font-normal mx-1.5">vs</span>
                                             {partido.visitante}
+                                            {partido.es_comodin && (
+                                                <span className="ml-1.5 text-amber-500 text-sm font-semibold">⭐</span>
+                                            )}
                                         </span>
-                                        {partido.es_comodin && (
-                                            <span className="ml-2 text-amber-500 text-sm">⭐ comodín</span>
-                                        )}
+                                        <MiniEscudo
+                                            nombre={partido.visitante}
+                                            escudoUrl={partido.escudo_visitante}
+                                            color={partido.color_visitante}
+                                        />
                                     </div>
 
                                     {/* Resultado */}
