@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API } from "./config/api";
 
 function Login({ onLogin }) {
@@ -7,6 +7,14 @@ function Login({ onLogin }) {
   const [mensaje, setMensaje] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [serverReady, setServerReady] = useState(false);
+
+  useEffect(() => {
+    // Warm up Render backend (free tier spins down after inactivity)
+    fetch(`${API}/jornadas`)
+      .catch(() => {})
+      .finally(() => setServerReady(true));
+  }, []);
 
   const iniciarSesion = async () => {
     setLoading(true);
@@ -110,7 +118,14 @@ function Login({ onLogin }) {
             alt="Los Tercos"
             className="h-36 w-auto object-contain mb-4 drop-shadow-lg"
           />
-          <p className="text-sm text-gray-500 mt-1">Quiniela de fútbol</p>
+          {serverReady ? (
+            <p className="text-sm text-gray-500 mt-1">Quiniela de fútbol</p>
+          ) : (
+            <p className="text-sm mt-1 flex items-center gap-1.5 justify-center text-amber-500">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              Iniciando servidor...
+            </p>
+          )}
         </div>
 
         {/* Email */}

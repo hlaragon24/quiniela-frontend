@@ -6,7 +6,7 @@ import App from "./App";
 import AdminResultados from "./AdminResultados";
 import AdminOrganizador from "./AdminOrganizador";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { setOnUnauthorized } from "./config/api";
 
 import "./index.css";
@@ -17,18 +17,31 @@ function Root() {
 
   const [sesionActiva, setSesionActiva] = useState(token);
 
-  const cerrarSesion = () => {
-
+  const cerrarSesion = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("rol");
     localStorage.removeItem("nombre");
     localStorage.removeItem("usuario_id");
-
     setSesionActiva(null);
-
-  };
+  }, []);
 
   setOnUnauthorized(cerrarSesion);
+
+  useEffect(() => {
+    const checkExpiry = () => {
+      const t = localStorage.getItem("token");
+      if (!t) return;
+      try {
+        const { exp } = JSON.parse(atob(t.split(".")[1]));
+        if (exp && Date.now() / 1000 > exp) cerrarSesion();
+      } catch {
+        cerrarSesion();
+      }
+    };
+    checkExpiry();
+    const id = setInterval(checkExpiry, 60_000);
+    return () => clearInterval(id);
+  }, [cerrarSesion]);
 
   if (!sesionActiva) {
 
