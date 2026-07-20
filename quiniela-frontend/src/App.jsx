@@ -10,6 +10,7 @@ import Reglamento from "./Reglamento";
 import { API, apiFetch } from "./config/api";
 import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
+import NotificacionesCampana from "./components/NotificacionesCampana";
 
 function App({ onLogout }) {
   const [torneos, setTorneos] = useState([]);
@@ -418,6 +419,18 @@ function App({ onLogout }) {
               onCerrarJornada={handleCerrarJornada}
             />
           )}
+
+          {/* Campana de notificaciones */}
+          <NotificacionesCampana
+            jornadaActual={jornadaActual}
+            jornadaAbierta={jornadaAbierta}
+            partidos={partidos}
+            pronosticosUsuario={pronosticosUsuario}
+            marcadoresUsuario={marcadoresUsuario}
+            miPagoTemporada={miPagoTemporada}
+            torneoId={torneoId}
+            onNavegar={setActiveTab}
+          />
 
           {/* Usuarios activos en tiempo real */}
           {usuariosActivos.length > 0 && (
