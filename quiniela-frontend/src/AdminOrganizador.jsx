@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import TimerJornada from "./TimerJornada";
 import AdminPronosticos from "./AdminPronosticos";
 import AdminParticipacion from "./AdminParticipacion";
@@ -7,6 +8,18 @@ import AdminEvidencia from "./AdminEvidencia";
 import TeamShield from "./components/TeamShield";
 import { API } from "./config/api";
 import { jornadaActivaDeListado } from "./utils/jornadaActiva";
+
+const ORG_PATH_TO_TAB = {
+  "/organizer/resultados":    "resultados",
+  "/organizer/pronosticos":   "pronosticos",
+  "/organizer/participacion": "participacion",
+  "/organizer/evidencia":     "evidencia",
+  "/organizer/jugadores":     "jugadores",
+};
+
+const ORG_TAB_TO_PATH = Object.fromEntries(
+  Object.entries(ORG_PATH_TO_TAB).map(([path, tab]) => [tab, path])
+);
 
 function AdminOrganizador({ onLogout }) {
   const [torneos, setTorneos] = useState([]);
@@ -17,7 +30,10 @@ function AdminOrganizador({ onLogout }) {
   const [partidos, setPartidos] = useState([]);
   const [marcadores, setMarcadores] = useState({});
   const [mensaje, setMensaje] = useState("");
-  const [tab, setTab] = useState("resultados");
+  const location  = useLocation();
+  const navigate  = useNavigate();
+  const tab       = ORG_PATH_TO_TAB[location.pathname] ?? "resultados";
+  const setTab    = (t) => navigate(ORG_TAB_TO_PATH[t] ?? "/organizer/resultados");
 
   const token = localStorage.getItem("token");
   const nombre = localStorage.getItem("nombre") || "Organizador";
@@ -70,6 +86,12 @@ function AdminOrganizador({ onLogout }) {
       setMarcadores(golesExistentes);
     } catch (e) { console.error(e); }
   };
+
+  useEffect(() => {
+    if (!location.pathname.startsWith("/organizer")) {
+      navigate("/organizer/resultados", { replace: true });
+    }
+  }, []);
 
   useEffect(() => { cargarTorneos(); }, []);
   useEffect(() => { if (torneoId) { setJornada(""); setJornadas([]); cargarJornadas(torneoId); } }, [torneoId]);

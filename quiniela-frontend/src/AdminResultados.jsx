@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Ranking from "./Ranking";
 import TimerJornada from "./TimerJornada";
 import AdminJornadas from "./AdminJornadas";
@@ -23,6 +24,31 @@ import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
 
+const ADMIN_PATH_TO_TAB = {
+    "/admin/resultados":    "resultados",
+    "/admin/torneos":       "torneos",
+    "/admin/organizadores": "organizadores",
+    "/admin/jornadas":      "jornadas",
+    "/admin/partidos":      "partidos",
+    "/admin/usuarios":      "usuarios",
+    "/admin/campeon":       "campeon",
+    "/admin/historico":     "historico",
+    "/admin/pagos":         "pagos",
+    "/admin/equipos":       "equipos",
+    "/admin/tabla":         "tabla",
+    "/admin/reglamento":    "reglamento",
+    "/admin/pronosticos":   "pronosticos-admin",
+    "/admin/participacion": "participacion",
+    "/admin/evidencia":     "evidencia",
+    "/admin/evolucion":     "evolucion",
+    "/admin/auditoria":     "auditoria",
+    "/admin/importar":      "importar",
+};
+
+const ADMIN_TAB_TO_PATH = Object.fromEntries(
+    Object.entries(ADMIN_PATH_TO_TAB).map(([path, tab]) => [tab, path])
+);
+
 function AdminResultados({ onLogout }) {
     const [torneos, setTorneos] = useState([]);
     const [torneoId, setTorneoId] = useState("");
@@ -35,7 +61,10 @@ function AdminResultados({ onLogout }) {
     const [mensaje, setMensaje] = useState("");
     const [refreshRanking, setRefreshRanking] = useState(false);
     const [guardados, setGuardados] = useState({});
-    const [tab, setTab] = useState("resultados");
+    const location  = useLocation();
+    const navigate  = useNavigate();
+    const tab       = ADMIN_PATH_TO_TAB[location.pathname] ?? "resultados";
+    const setTab    = (t) => navigate(ADMIN_TAB_TO_PATH[t] ?? "/admin/resultados");
 
     const token = localStorage.getItem("token");
     const [usuariosActivos, setUsuariosActivos] = useState([]);
@@ -118,6 +147,12 @@ function AdminResultados({ onLogout }) {
     };
 
     // ── Effects ──────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!location.pathname.startsWith("/admin")) {
+            navigate("/admin/resultados", { replace: true });
+        }
+    }, []);
+
     useEffect(() => {
         cargarTorneos();
     }, []);
