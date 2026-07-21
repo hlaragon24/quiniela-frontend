@@ -8,15 +8,27 @@ import AdminResultados from "./AdminResultados";
 import AdminOrganizador from "./AdminOrganizador";
 
 import { useState, useEffect, useCallback } from "react";
+import { Navigate } from "react-router-dom";
 import { setOnUnauthorized } from "./config/api";
 import { API } from "./config/api";
 
 import "./index.css";
 
-function Root() {
-
+// Componente que protege rutas según el rol esperado
+function RequireRole({ rol, children }) {
   const token = localStorage.getItem("token");
+  if (!token) return <Navigate to="/" replace />;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.rol !== rol) return <Navigate to="/" replace />;
+  } catch {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
+function Root() {
+  const token = localStorage.getItem("token");
   const [sesionActiva, setSesionActiva] = useState(token);
 
   const cerrarSesion = useCallback(() => {
@@ -27,9 +39,12 @@ function Root() {
     setSesionActiva(null);
   }, []);
 
-  setOnUnauthorized(cerrarSesion);
+  // S-07: setOnUnauthorized en efecto, no en el cuerpo del render
+  useEffect(() => {
+    setOnUnauthorized(cerrarSesion);
+  }, [cerrarSesion]);
 
-  // Ping al backend cada 2 min para registrar presencia (activos en tiempo real)
+  // Ping al backend cada 2 min para registrar presencia
   useEffect(() => {
     if (!sesionActiva) return;
     const ping = () => {
@@ -45,6 +60,7 @@ function Root() {
     return () => clearInterval(id);
   }, [sesionActiva]);
 
+  // Expiración de sesión
   useEffect(() => {
     const checkExpiry = () => {
       const t = localStorage.getItem("token");
@@ -61,39 +77,34 @@ function Root() {
     return () => clearInterval(id);
   }, [cerrarSesion]);
 
-  if (!sesionActiva) {
+  if (!sesionActiva) return <Login onLogin={setSesionActiva} />;
 
-    return <Login onLogin={setSesionActiva} />;
-
-  }
-
-
-  // detectar rol admin desde token
-
+  // A-01: detectar rol y renderizar la UI correcta con protección real
   let payload = {};
-
   try {
     payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (error) {
-    console.error("Token inválido:", error);
+  } catch {
     localStorage.removeItem("token");
     return <Login onLogin={setSesionActiva} />;
   }
 
-  const esAdmin = payload.rol === "admin";
+  if (payload.rol === "admin") {
+    return (
+      <RequireRole rol="admin">
+        <AdminResultados onLogout={cerrarSesion} />
+      </RequireRole>
+    );
+  }
 
-
-if (esAdmin) {
-  return <AdminResultados onLogout={cerrarSesion} />;
-}
-
-if (payload.rol === "organizer") {
-  return <AdminOrganizador onLogout={cerrarSesion} />;
-}
-
+  if (payload.rol === "organizer") {
+    return (
+      <RequireRole rol="organizer">
+        <AdminOrganizador onLogout={cerrarSesion} />
+      </RequireRole>
+    );
+  }
 
   return <App onLogout={cerrarSesion} />;
-
 }
 
 ReactDOM.createRoot(document.getElementById("root"))

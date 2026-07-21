@@ -116,9 +116,14 @@ function AdminOrganizador({ onLogout }) {
   };
 
   const guardarTodos = async () => {
+    const entradas = Object.entries(marcadores).filter(([, m]) =>
+      m.local !== "" && m.local !== undefined && m.visitante !== "" && m.visitante !== undefined &&
+      Number(m.local) >= 0 && Number(m.visitante) >= 0
+    );
+    if (entradas.length === 0) { setMensaje("⚠️ No hay marcadores válidos para guardar"); return; }
     try {
-      await Promise.all(
-        Object.entries(marcadores).map(([pid, m]) =>
+      const respuestas = await Promise.all(
+        entradas.map(([pid, m]) =>
           fetch(`${API}/resultados/${pid}`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -126,6 +131,8 @@ function AdminOrganizador({ onLogout }) {
           })
         )
       );
+      const fallidos = respuestas.filter((r) => !r.ok).length;
+      if (fallidos > 0) { setMensaje(`❌ ${fallidos} resultado(s) no se pudieron guardar`); return; }
       setMensaje("✅ Resultados guardados");
     } catch { setMensaje("❌ Error guardando resultados"); }
   };

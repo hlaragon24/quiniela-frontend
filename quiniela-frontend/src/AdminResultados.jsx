@@ -20,6 +20,7 @@ import AdminEvidencia from "./AdminEvidencia";
 import EvolucionPosiciones from "./EvolucionPosiciones";
 import AdminOrganizadores from "./AdminOrganizadores";
 import { API, apiFetch } from "./config/api";
+import { useUsuariosActivos } from "./hooks/useUsuariosActivos";
 import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 import { exportarCSV } from "./utils/exportCsv";
@@ -67,7 +68,7 @@ function AdminResultados({ onLogout }) {
     const setTab    = (t) => navigate(ADMIN_TAB_TO_PATH[t] ?? "/admin/resultados");
 
     const token = localStorage.getItem("token");
-    const [usuariosActivos, setUsuariosActivos] = useState([]);
+    const usuariosActivos = useUsuariosActivos();
     const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 
     // ── Torneos ─────────────────────────────────────────────────────────
@@ -157,19 +158,6 @@ function AdminResultados({ onLogout }) {
         cargarTorneos();
     }, []);
 
-    useEffect(() => {
-        const fetchActivos = () => {
-            apiFetch(`${API}/usuarios/activos`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-                .then((r) => r.json())
-                .then((d) => { if (Array.isArray(d)) setUsuariosActivos(d); })
-                .catch(() => {});
-        };
-        fetchActivos();
-        const id = setInterval(fetchActivos, 30_000);
-        return () => clearInterval(id);
-    }, []);
 
     useEffect(() => {
         if (!torneoId) return;
@@ -229,12 +217,15 @@ function AdminResultados({ onLogout }) {
     };
 
     const guardarTodosResultados = async () => {
-        const entradas = Object.entries(marcadores).filter(
-            ([, m]) => m.local !== "" && m.local !== undefined && m.visitante !== "" && m.visitante !== undefined
-        );
-        if (entradas.length === 0) { setMensaje("⚠️ No hay marcadores para guardar"); return; }
+        const entradas = Object.entries(marcadores).filter(([, m]) => {
+            const local = m.local;
+            const visitante = m.visitante;
+            return local !== "" && local !== undefined && visitante !== "" && visitante !== undefined &&
+                   Number(local) >= 0 && Number(visitante) >= 0;
+        });
+        if (entradas.length === 0) { setMensaje("⚠️ No hay marcadores válidos para guardar"); return; }
         try {
-            await Promise.all(
+            const respuestas = await Promise.all(
                 entradas.map(([partidoId, marcador]) =>
                     fetch(`${API}/resultados/${partidoId}`, {
                         method: "POST",
@@ -246,6 +237,11 @@ function AdminResultados({ onLogout }) {
                     })
                 )
             );
+            const fallidos = respuestas.filter((r) => !r.ok).length;
+            if (fallidos > 0) {
+                setMensaje(`❌ ${fallidos} resultado(s) no se pudieron guardar`);
+                return;
+            }
             const nuevosGuardados = {};
             entradas.forEach(([id]) => { nuevosGuardados[id] = true; });
             setGuardados((prev) => ({ ...prev, ...nuevosGuardados }));
@@ -409,6 +405,20 @@ function AdminResultados({ onLogout }) {
                         </select>
                     </div>
 
+                    <div className="mb-4 flex justify-end">
+                        <button
+                            onClick={() => {
+                                if (window.confirm("¿Guardar todos los marcadores visibles?")) {
+                                    guardarTodosResultados();
+                                }
+                            }}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors"
+                        >
+                            💾 Guardar todos
+                        </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b-2 border-gray-200">
@@ -496,6 +506,7 @@ function AdminResultados({ onLogout }) {
                             })}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             )}
 

@@ -9,6 +9,7 @@ import PerfilJugador from "./PerfilJugador";
 import HistoricoPronosticos from "./HistoricoPronosticos";
 import Reglamento from "./Reglamento";
 import { API, apiFetch } from "./config/api";
+import { useUsuariosActivos } from "./hooks/useUsuariosActivos";
 import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 import NotificacionesCampana from "./components/NotificacionesCampana";
@@ -28,8 +29,20 @@ const TAB_TO_PATH = Object.fromEntries(
   Object.entries(PATH_TO_TAB).map(([path, tab]) => [tab, path])
 );
 
+const NAV_ITEMS = [
+  { value: "inicio",                icon: "🏠", label: "Inicio" },
+  { value: "pronosticos",           icon: "⚽", label: "Pronósticos" },
+  { value: "historial",              icon: "📈", label: "Historial" },
+  { value: "misResultados",         icon: "📋", label: "Mis pronósticos" },
+  { value: "tabla-general",         icon: "🏆", label: "Tabla" },
+  { value: "perfil",                icon: "👤", label: "Perfil" },
+  { value: "historico-pronosticos", icon: "📚", label: "Histórico general" },
+  { value: "reglamento",            icon: "📋", label: "Reglamento" },
+];
+
 function App({ onLogout }) {
   const [torneos, setTorneos] = useState([]);
+  const [cargandoTorneos, setCargandoTorneos] = useState(true);
   const [torneoId, setTorneoId] = useState("");
 
   const [jornadaNumero, setJornadaNumero] = useState("");
@@ -53,7 +66,7 @@ function App({ onLogout }) {
   const navigate     = useNavigate();
   const activeTab    = PATH_TO_TAB[location.pathname] ?? "inicio";
   const setActiveTab = useCallback((tab) => navigate(TAB_TO_PATH[tab] ?? "/"), [navigate]);
-  const [usuariosActivos, setUsuariosActivos] = useState([]);
+  const usuariosActivos = useUsuariosActivos();
   const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 
   const token = localStorage.getItem("token");
@@ -83,6 +96,8 @@ function App({ onLogout }) {
       if (data.length > 0) setTorneoId(data[0].id);
     } catch (error) {
       console.error("Error cargando torneos:", error);
+    } finally {
+      setCargandoTorneos(false);
     }
   };
 
@@ -225,19 +240,6 @@ function App({ onLogout }) {
     cargarTorneos();
   }, []);
 
-  useEffect(() => {
-    const fetchActivos = () => {
-      apiFetch(`${API}/usuarios/activos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((d) => { if (Array.isArray(d)) setUsuariosActivos(d); })
-        .catch(() => {});
-    };
-    fetchActivos();
-    const id = setInterval(fetchActivos, 30_000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (!torneoId) return;
@@ -393,16 +395,7 @@ function App({ onLogout }) {
   };
 
   // ── Render ────────────────────────────────────────────────────────────
-  const NAV_ITEMS = [
-    { value: "inicio",                icon: "🏠", label: "Inicio" },
-    { value: "pronosticos",           icon: "⚽", label: "Pronósticos" },
-    { value: "historial",              icon: "📈", label: "Historial" },
-    { value: "misResultados",         icon: "📋", label: "Mis pronósticos" },
-    { value: "tabla-general",         icon: "🏆", label: "Tabla" },
-    { value: "perfil",                icon: "👤", label: "Perfil" },
-    { value: "historico-pronosticos", icon: "📚", label: "Histórico general" },
-    { value: "reglamento", icon: "📋", label: "Reglamento" },
-  ];
+  if (cargandoTorneos) return null;
 
   if (torneos.length === 0 && torneoId === "") {
     return (
@@ -563,6 +556,7 @@ function App({ onLogout }) {
             marcadoresUsuario={marcadoresUsuario}
             jornadasCount={listaJornadas.length}
             torneoId={torneoId}
+            miPagoTemporada={miPagoTemporada}
           />
         )}
 
@@ -589,7 +583,11 @@ function App({ onLogout }) {
                   )}
                 </div>
                 <button
-                  onClick={inscritoEnJornada ? desinscribirseDeJornada : inscribirseEnJornada}
+                  onClick={
+                    inscritoEnJornada
+                      ? () => { if (window.confirm("¿Cancelar tu inscripción a esta jornada? Perderás tus pronósticos guardados.")) desinscribirseDeJornada(); }
+                      : inscribirseEnJornada
+                  }
                   className={`flex-shrink-0 text-sm font-bold px-4 py-2 rounded-xl transition-all active:scale-95 ${
                     inscritoEnJornada
                       ? "bg-red-100 text-red-600 hover:bg-red-200"
@@ -750,6 +748,8 @@ function App({ onLogout }) {
       {/* ── TOAST NOTIFICACIÓN ── */}
       {mensaje && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl text-white text-sm font-semibold max-w-[85vw] w-max pointer-events-none ${
             mensaje.startsWith("✅") ? "bg-green-600 shadow-green-900/50" :
             mensaje.startsWith("❌") ? "bg-red-600 shadow-red-900/50" :

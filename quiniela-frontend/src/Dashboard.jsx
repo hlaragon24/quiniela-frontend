@@ -41,14 +41,14 @@ function formatearDinero(valor) {
     return Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 }
 
-function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario, marcadoresUsuario, jornadasCount, torneoId }) {
+function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario, marcadoresUsuario, jornadasCount, torneoId, miPagoTemporada }) {
     const [resumen, setResumen] = useState(null);
     const [ranking, setRanking] = useState([]);
     const [bottom5, setBottom5] = useState([]);
     const [configCampeon, setConfigCampeon] = useState(null);
     const [campeonInput, setCampeonInput] = useState("");
     const [miCampeon, setMiCampeon] = useState(null);
-    const [miPago, setMiPago] = useState(null);
+    const miPago = miPagoTemporada ?? null;
     const [mensajeCampeon, setMensajeCampeon] = useState("");
     const [cargando, setCargando] = useState(true);
     const [guardandoCampeon, setGuardandoCampeon] = useState(false);
@@ -67,7 +67,6 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                 resRanking,
                 resMiCampeon,
                 resConfigCampeon,
-                resMiPago,
             ] = await Promise.all([
                 fetch(`${API}/ranking/mi-resumen?torneo_id=${tid}`, {
                     headers: { Authorization: `Bearer ${token}` },
@@ -77,16 +76,12 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
                     headers: { Authorization: `Bearer ${token}` },
                 }),
                 fetch(`${API}/campeon/config?torneo_id=${tid}`),
-                fetch(`${API}/pagos/mi-pago?torneo_id=${tid}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                }),
             ]);
 
             const dataResumen = await resResumen.json();
             const dataRanking = await resRanking.json();
             const dataMiCampeon = await resMiCampeon.json();
             const dataConfigCampeon = await resConfigCampeon.json();
-            const dataMiPago = await resMiPago.json();
 
             if (resResumen.ok) setResumen(dataResumen);
             if (resRanking.ok && Array.isArray(dataRanking)) {
@@ -105,7 +100,6 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
             }
 
             if (resConfigCampeon.ok) setConfigCampeon(dataConfigCampeon);
-            if (resMiPago.ok) setMiPago(dataMiPago);
         } catch (error) {
             console.error("Error cargando dashboard:", error);
         } finally {
@@ -183,7 +177,6 @@ function Dashboard({ jornadaActual, jornadaAbierta, partidos, pronosticosUsuario
         setBottom5([]);
         setMiCampeon(null);
         setConfigCampeon(null);
-        setMiPago(null);
         setMensajeCampeon("");
         setCargando(true);
         cargarDashboard(torneoId);
