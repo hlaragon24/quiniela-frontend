@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import TimerJornada from "./TimerJornada";
 import HistorialJornadas from "./HistorialJornadas";
@@ -11,6 +12,21 @@ import { API, apiFetch } from "./config/api";
 import { jornadaActivaDeListado } from "./utils/jornadaActiva";
 import TeamShield from "./components/TeamShield";
 import NotificacionesCampana from "./components/NotificacionesCampana";
+
+const PATH_TO_TAB = {
+  "/":                    "inicio",
+  "/pronosticos":         "pronosticos",
+  "/historial":           "historial",
+  "/mis-pronosticos":     "misResultados",
+  "/tabla":               "tabla-general",
+  "/perfil":              "perfil",
+  "/historico":           "historico-pronosticos",
+  "/reglamento":          "reglamento",
+};
+
+const TAB_TO_PATH = Object.fromEntries(
+  Object.entries(PATH_TO_TAB).map(([path, tab]) => [tab, path])
+);
 
 function App({ onLogout }) {
   const [torneos, setTorneos] = useState([]);
@@ -33,7 +49,10 @@ function App({ onLogout }) {
   const [torneoTipo, setTorneoTipo]           = useState("temporada");
   const [miPagoTemporada, setMiPagoTemporada] = useState(null);   // {pagado} o null
   const [misPagosJornada, setMisPagosJornada] = useState({});     // { jornadaId: bool }
-  const [activeTab, setActiveTab] = useState("inicio");
+  const location     = useLocation();
+  const navigate     = useNavigate();
+  const activeTab    = PATH_TO_TAB[location.pathname] ?? "inicio";
+  const setActiveTab = useCallback((tab) => navigate(TAB_TO_PATH[tab] ?? "/"), [navigate]);
   const [usuariosActivos, setUsuariosActivos] = useState([]);
   const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 

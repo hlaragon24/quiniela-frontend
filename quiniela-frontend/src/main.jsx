@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 
 import Login from "./Login";
 import App from "./App";
@@ -98,6 +99,8 @@ if (payload.rol === "organizer") {
 ReactDOM.createRoot(document.getElementById("root"))
 .render(
   <React.StrictMode>
-    <Root />
+    <BrowserRouter>
+      <Root />
+    </BrowserRouter>
   </React.StrictMode>
 );
